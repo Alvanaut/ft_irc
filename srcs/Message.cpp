@@ -50,7 +50,7 @@ Message parseMessage(const std::string& message)
 
 bool isValidNickname(const std::string& name)
 {
-	if (name.empty() || name.length() > 9)
+	if (name.empty() || name.length() > 9)
 		return false;
 	if (!std::isalpha(name[0]))
 		return false;
@@ -58,7 +58,7 @@ bool isValidNickname(const std::string& name)
 	while (i < name.length())
 	{
 		char c = name[i];
-		if (std::isalnum(c) || std::string("-[]\\^{}").find(c) != std::string::npos)
+		if (std::isalnum(c) || std::string("-[]\\^{}").find(c) != std::string::npos)
 			i++;
 		else
 			return false;
@@ -78,7 +78,7 @@ bool isValidChannelName(const std::string& name)
 	while (i < name.length())
 	{
 		char c = name[i];
-		if (c == ' ' || c == ',' || c == 7) 
+		if (c == ' ' || c == ',' || c == 7) 
 			return false;
 		i++;
 	}
