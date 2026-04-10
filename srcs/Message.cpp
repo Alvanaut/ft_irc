@@ -28,7 +28,22 @@ Message parseMessage(const std::string& message)
 		}
 		msg.command = cleanMessage.substr(cursor, end - cursor);
 		cursor = end + 1;
-
+		while (cursor < cleanMessage.length())
+		{
+			if (cleanMessage[cursor] == ':')
+			{
+				msg.params.push_back(cleanMessage.substr(cursor + 1));
+				break ;
+			}
+			size_t newWord = cleanMessage.find(' ', cursor);
+			if (newWord == std::string::npos)
+			{
+				msg.params.push_back(cleanMessage.substr(cursor));
+				break ;
+			}
+			msg.params.push_back(cleanMessage.substr(cursor, newWord - cursor));
+			cursor = newWord + 1;
+		}
 	}
 	return msg; 
 }
