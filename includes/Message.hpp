@@ -12,5 +12,7 @@ struct Message {
 };
 
 Message parseMessage(const std::string& message);
+bool isValidNickname(const std::string& name);
+bool isValidChannelName(const std::string& name);
 
 #endif

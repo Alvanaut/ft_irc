@@ -47,3 +47,42 @@ Message parseMessage(const std::string& message)
 	}
 	return msg; 
 }
+
+bool isValidNickname(const std::string& name)
+{
+	if (name.empty() || name.length() > 9)
+		return false;
+	if (!std::isalpha(name[0]))
+		return false;
+	size_t i = 1;
+	while (i < name.length())
+	{
+		char c = name[i];
+		if (std::isalnum(c) || std::string("-[]\\^{}").find(c) != std::string::npos)
+			i++;
+		else
+			return false;
+	}
+	return true;
+}
+
+
+bool isValidChannelName(const std::string& name)
+{
+		if (name.length() > 200 || name.empty())
+		return false;
+	if (name[0] != '#' && name[0] != '&')
+		return false;
+
+	size_t i = 1;
+	while (i < name.length())
+	{
+		char c = name[i];
+		if (c == ' ' || c == ',' || c == 7) 
+			return false;
+		i++;
+	}
+	return true;
+}
+
+
