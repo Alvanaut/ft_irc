@@ -2,6 +2,7 @@ data.csv
 a.out
 *.o
 *.org
+*.md
 btc
 RPN
 exercise*
@@ -9,3 +10,4 @@ Notes*
 *test*
 *.txt
 
+/ircserv

@@ -5,7 +5,12 @@ CXX = c++
 CXXFLAGS = -Wall -Wextra -Werror -std=c++98
 
 SRCS = srcs/main.cpp \
-		srcs/Message.cpp
+	srcs/Client.cpp \
+	srcs/Message.cpp \
+	srcs/Server.cpp
+
+INCD = includes/
+
 OBJS = $(SRCS:.cpp=.o)
 
 all: $(NAME)
@@ -14,7 +19,7 @@ $(NAME): $(OBJS)
 	$(CXX) $(CXXFLAGS) $(OBJS) -o $(NAME)
 
 %.o: %.cpp
-	$(CXX) $(CXXFLAGS) -c $< -o $@
+	$(CXX) $(CXXFLAGS) -I$(INCD) -c $< -o $@
 
 clean:
 	rm -f $(OBJS)
