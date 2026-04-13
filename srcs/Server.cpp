@@ -47,7 +47,7 @@ Server::~Server()
 
 Server::Server(const Server& other)
 	: port(other.port), password(other.password), listen_fd(-1), epoll_fd(-1),
-	  clients(other.clients)
+	  clients(other.clients), channels(other.channels)
 {
 }
 
@@ -58,6 +58,7 @@ Server& Server::operator=(const Server &other)
 		port = other.port;
 		password = other.password;
 		clients = other.clients;
+		channels = other.channels;
 		listen_fd = -1;
 		epoll_fd = -1;
 	}
