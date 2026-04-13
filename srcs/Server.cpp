@@ -47,7 +47,7 @@ Server::~Server()
 
 Server::Server(const Server& other)
 	: port(other.port), password(other.password), listen_fd(-1), epoll_fd(-1),
-	  clients(other.clients), channels(other.channels)
+	  clients(other.clients)
 {
 }
 
@@ -58,7 +58,6 @@ Server& Server::operator=(const Server &other)
 		port = other.port;
 		password = other.password;
 		clients = other.clients;
-		channels = other.channels;
 		listen_fd = -1;
 		epoll_fd = -1;
 	}
@@ -127,6 +126,7 @@ void Server::acceptNewClients()
 		int client_fd = accept(listen_fd, NULL, NULL);
 		if (client_fd < 0)
 		{
+			// means we have nothing more to read
 			if (errno == EAGAIN || errno == EWOULDBLOCK)
 				break ;
 			std::cerr << "accept() failed" << std::endl;
@@ -138,12 +138,21 @@ void Server::acceptNewClients()
 			continue ;
 		}
 
+		// add client_fd to listening pool
 		struct epoll_event ev;
 		std::memset(&ev, 0, sizeof(ev));
 		ev.events = EPOLLIN | EPOLLRDHUP;
 		ev.data.fd = client_fd;
 		if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, client_fd, &ev) < 0)
 		{
+			close(client_fd);
+			continue ;
+		}
+		std::pair<std::map<int, Client>::iterator, bool> result =
+			clients.insert(std::make_pair(client_fd, Client(client_fd)));
+		if (!result.second)
+		{
+			epoll_ctl(epoll_fd, EPOLL_CTL_DEL, client_fd, NULL);
 			close(client_fd);
 			continue ;
 		}
@@ -155,6 +164,12 @@ void Server::acceptNewClients()
 void Server::handleClientEvent(int fd)
 {
 	char buffer[512];
+	std::map<int, Client>::iterator it = clients.find(fd);
+	if (it == clients.end())
+	{
+		disconnectClient(fd);
+		return ;
+	}
 	ssize_t bytes = recv(fd, buffer, sizeof(buffer), 0);
 	if (bytes == 0)
 	{
@@ -167,7 +182,9 @@ void Server::handleClientEvent(int fd)
 			disconnectClient(fd);
 		return ;
 	}
-	std::cout << "Received " << bytes << " bytes from fd=" << fd << std::endl;
+	it->second.appendToInputBuffer(std::string(buffer, bytes));
+	std::cout << "Received " << bytes << " bytes from fd=" << fd
+		<< ", buffered=" << it->second.getInputBuffer() << std::endl;
 }
 
 void Server::run()
