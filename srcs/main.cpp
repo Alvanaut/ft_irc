@@ -1,4 +1,5 @@
-#include "../includes/Message.hpp"
+#include "../includes/Command.hpp"
+#include <iostream>
 
 int main(int ac, char **av)
 {
