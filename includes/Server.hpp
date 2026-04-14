@@ -24,6 +24,8 @@ private :
 	void	initEpoll();
 	void	acceptNewClients();
 	void	handleClientEvent(int fd);
+	void	joinChannel(int fd, const std::string& channel_name);
+	void	removeClientFromAllChannels(int fd);
 	void	disconnectClient(int fd);
 	int		setNonBlocking(int fd);
 public :
