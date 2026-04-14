@@ -1,17 +1,16 @@
 #include "../includes/Command.hpp"
+#include "../includes/Server.hpp"
 #include <iostream>
 
 int main(int ac, char **av)
 {
-	if (ac != 2)
+	if (ac != 3)
 	{
-		std::cout << "Invalid format: Prefix -> commands -> params" << std::endl;
+		std::cout << "Please specify only a port and a password" << std::endl;
 		return 1;
 	}
-	Message message = parseMessage(av[1]);
-	std::cout << "Prefix : " << message.prefix << std::endl;
-	std::cout << "Commands : " << message.command << std::endl;
-	for (size_t i = 0; i < message.params.size(); i++)
-		std::cout << "Params [" << i << "] : " << message.params[i] << std::endl;
-	return 0;
+	Server	server(av[1], av[2]);
+	server.run();
+
+	return (0);
 }

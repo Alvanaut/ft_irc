@@ -113,8 +113,44 @@ void Server::initEpoll()
 		throw std::runtime_error("Server: epoll_ctl() failed on listen socket");
 }
 
+void Server::removeClientFromAllChannels(int fd)
+{
+	std::map<int, Client>::iterator client_it = clients.find(fd);
+	if (client_it == clients.end())
+		return ;
+
+	std::set<std::string> joined = client_it->second.getChannelsJoined();
+	for (std::set<std::string>::iterator it = joined.begin(); it != joined.end(); ++it)
+	{
+		std::map<std::string, Channel>::iterator channel_it = channels.find(*it);
+		if (channel_it == channels.end())
+			continue ;
+		channel_it->second.removeMember(fd);
+		if (channel_it->second.empty())
+			channels.erase(channel_it);
+	}
+}
+
+void Server::joinChannel(int fd, const std::string& channel_name)
+{
+	std::map<int, Client>::iterator client_it = clients.find(fd);
+	if (client_it == clients.end())
+		return ;
+
+	std::map<std::string, Channel>::iterator channel_it = channels.find(channel_name);
+	if (channel_it == channels.end())
+	{
+		std::pair<std::map<std::string, Channel>::iterator, bool> result =
+			channels.insert(std::make_pair(channel_name, Channel(channel_name)));
+		channel_it = result.first;
+	}
+	channel_it->second.addMember(fd);
+	client_it->second.joinChannel(channel_name);
+}
+
 void Server::disconnectClient(int fd)
 {
+	removeClientFromAllChannels(fd);
 	epoll_ctl(epoll_fd, EPOLL_CTL_DEL, fd, NULL);
 	close(fd);
 	clients.erase(fd);
@@ -185,7 +221,7 @@ void Server::handleClientEvent(int fd)
 	}
 	it->second.appendToInputBuffer(std::string(buffer, bytes));
 	std::cout << "Received " << bytes << " bytes from fd=" << fd
-		<< ", buffered=" << it->second.getInputBuffer() << std::endl;
+		<< ", buffered=" << it->second.getInputBuffer().size() << std::endl;
 }
 
 void Server::run()
