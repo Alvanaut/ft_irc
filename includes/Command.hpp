@@ -16,6 +16,7 @@ bool isValidNickname(const std::string& name);
 bool isValidChannelName(const std::string& name);
 
 class Client;
+class Server;
 
 class Command {
 	protected:
@@ -24,7 +25,7 @@ class Command {
 		virtual ~Command();
 		Command(const Message& msg);
 
-		virtual int execute(Client& client) = 0;
+		virtual void	execute(Client& client, Server& server) = 0;
 
 };
 #endif

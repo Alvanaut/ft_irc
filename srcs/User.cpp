@@ -1,12 +1,30 @@
 #include "../includes/User.hpp"
+#include "../includes/Server.hpp"
+#include "../includes/Client.hpp"
+#include "../includes/Replies.hpp"
 
 User::User(const Message& msg) : Command(msg) {}
 
-int User::execute(Client& client)
+void User::execute(Client& client, Server& server)
 {
-	if (_msg.params.size() < 4 || _msg.params[0].empty() || _msg.params[3].empty())
-		return 1;
+	const std::string nick = client.getNickname().empty() ? "*" : client.getNickname();
+
+	if (_msg.params.size() < 4 || _msg.params[0].empty() || _msg.params[3].empty())
+	{
+		server.sendToClient(client.getFd(), ERR::needMoreParams(nick, "USER"));
+		return ;
+	}
+	if (client.isRegistered())
+	{
+		server.sendToClient(client.getFd(), ERR::alreadyRegistered(nick));
+		return ;
+	}
 	client.setUsername(_msg.params[0]);
-	client.setRealname(_msg.params[3]);
-	return 0;
+	client.setRealName(_msg.params[3]);
+	if (client.registrationComplete())
+	{
+		client.setRegistered(true);
+		server.sendWelcome(client);
+	}
+	return ;
 }

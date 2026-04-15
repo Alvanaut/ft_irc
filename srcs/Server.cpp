@@ -1,4 +1,18 @@
-#include "Server.hpp"
+#include "../includes/Server.hpp"
+#include "../includes/Command.hpp"
+#include "../includes/Pass.hpp"
+#include "../includes/Nick.hpp"
+#include "../includes/User.hpp"
+#include "../includes/Quit.hpp"
+#include "../includes/Join.hpp"
+#include "../includes/Privmsg.hpp"
+#include "../includes/Notice.hpp"
+#include "../includes/Part.hpp"
+#include "../includes/Topic.hpp"
+#include "../includes/Invite.hpp"
+#include "../includes/Kick.hpp"
+#include "../includes/Mode.hpp"
+#include "../includes/Replies.hpp"
 
 #include <arpa/inet.h>
 #include <cerrno>
@@ -220,8 +234,168 @@ void Server::handleClientEvent(int fd)
 		return ;
 	}
 	it->second.appendToInputBuffer(std::string(buffer, bytes));
-	std::cout << "Received " << bytes << " bytes from fd=" << fd
-		<< ", buffered=" << it->second.getInputBuffer().size() << std::endl;
+
+	while (true)
+	{
+		const std::string& buf = it->second.getInputBuffer();
+		size_t pos = buf.find("\r\n");
+		if (pos == std::string::npos)
+			break ;
+		std::string line = buf.substr(0, pos + 2);
+		it->second.eraseFromInputBuffer(pos + 2);
+		processCommand(it->second, line);
+	}
+}
+
+void Server::sendToClient(int fd, const std::string& msg)
+{
+	send(fd, msg.c_str(), msg.size(), 0);
+}
+
+const std::string& Server::getPassword() const
+{
+	return (password);
+}
+
+std::string Server::getServerName() const
+{
+	return ("ircserv");
+}
+
+bool Server::isNickTaken(const std::string& nick, int exclude_fd) const
+{
+	for (std::map<int, Client>::const_iterator it = clients.begin(); it != clients.end(); ++it)
+	{
+		if (it->first != exclude_fd && it->second.getNickname() == nick)
+			return (true);
+	}
+	return (false);
+}
+
+void Server::sendWelcome(Client& client)
+{
+	const std::string& nick = client.getNickname();
+	const std::string& user = client.getUsername();
+	sendToClient(client.getFd(), RPL::welcome(nick, user));
+	sendToClient(client.getFd(), RPL::yourHost(nick));
+	sendToClient(client.getFd(), RPL::created(nick));
+	sendToClient(client.getFd(), RPL::myInfo(nick));
+}
+
+void Server::broadcastToClientChannels(const Client& client, const std::string& msg)
+{
+	const std::set<std::string>& joined = client.getChannelsJoined();
+	for (std::set<std::string>::const_iterator it = joined.begin(); it != joined.end(); ++it)
+	{
+		std::map<std::string, Channel>::iterator ch = channels.find(*it);
+		if (ch == channels.end())
+			continue ;
+		const std::set<int>& members = ch->second.getMembers();
+		for (std::set<int>::const_iterator m = members.begin(); m != members.end(); ++m)
+		{
+			if (*m != client.getFd())
+				sendToClient(*m, msg);
+		}
+	}
+}
+
+void Server::broadcastToChannel(const std::string& channel_name, const std::string& msg)
+{
+	std::map<std::string, Channel>::iterator ch = channels.find(channel_name);
+	if (ch == channels.end())
+		return ;
+	const std::set<int>& members = ch->second.getMembers();
+	for (std::set<int>::const_iterator m = members.begin(); m != members.end(); ++m)
+		sendToClient(*m, msg);
+}
+
+void Server::removeChannel(const std::string& name)
+{
+	channels.erase(name);
+}
+
+Channel* Server::getChannel(const std::string& name)
+{
+	std::map<std::string, Channel>::iterator it = channels.find(name);
+	if (it == channels.end())
+		return (NULL);
+	return (&it->second);
+}
+
+Client* Server::getClientByFd(int fd)
+{
+	std::map<int, Client>::iterator it = clients.find(fd);
+	if (it == clients.end())
+		return (NULL);
+	return (&it->second);
+}
+
+const Client* Server::getClientByFd(int fd) const
+{
+	std::map<int, Client>::const_iterator it = clients.find(fd);
+	if (it == clients.end())
+		return (NULL);
+	return (&it->second);
+}
+
+const Client* Server::getClientByNick(const std::string& nick) const
+{
+	for (std::map<int, Client>::const_iterator it = clients.begin(); it != clients.end(); ++it)
+	{
+		if (it->second.getNickname() == nick)
+			return (&it->second);
+	}
+	return (NULL);
+}
+
+void Server::processCommand(Client& client, const std::string& line)
+{
+	Message msg = parseMessage(line);
+	if (msg.command.empty())
+		return ;
+
+	const std::string& nick = client.getNickname().empty() ? std::string("*") : client.getNickname();
+
+	Command* cmd = NULL;
+	if (msg.command == "PASS")
+		cmd = new Pass(msg);
+	else if (msg.command == "NICK")
+		cmd = new Nick(msg);
+	else if (msg.command == "USER")
+		cmd = new User(msg);
+	else if (msg.command == "QUIT")
+		cmd = new Quit(msg);
+	else if (msg.command == "JOIN")
+		cmd = new Join(msg);
+	else if (msg.command == "PART")
+		cmd = new Part(msg);
+	else if (msg.command == "PRIVMSG")
+		cmd = new Privmsg(msg);
+	else if (msg.command == "NOTICE")
+		cmd = new Notice(msg);
+	else if (msg.command == "TOPIC")
+		cmd = new Topic(msg);
+	else if (msg.command == "INVITE")
+		cmd = new Invite(msg);
+	else if (msg.command == "KICK")
+		cmd = new Kick(msg);
+	else if (msg.command == "MODE")
+		cmd = new Mode(msg);
+	else if (msg.command == "PING")
+	{
+		if (msg.params.empty())
+			sendToClient(client.getFd(), ":ircserv 409 " + nick + " :No origin specified\r\n");
+		else
+			sendToClient(client.getFd(), "PONG ircserv :" + msg.params[0] + "\r\n");
+		return ;
+	}
+	else if (msg.command == "PONG")
+		return ;
+
+	if (!cmd)
+		return ;
+	cmd->execute(client, *this);
+	delete cmd;
 }
 
 void Server::run()

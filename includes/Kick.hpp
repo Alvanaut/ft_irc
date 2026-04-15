@@ -1,11 +1,11 @@
-#ifndef QUIT_HPP
-# define QUIT_HPP
+#ifndef KICK_HPP
+# define KICK_HPP
 
 # include "Command.hpp"
 
-class Quit : public Command {
+class Kick : public Command {
 	public:
-		Quit(const Message& msg);
+		Kick(const Message& msg);
 		void	execute(Client& client, Server& server);
 };
 

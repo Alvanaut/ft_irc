@@ -6,7 +6,7 @@
 class User : public Command {
 	public:
 		User(const Message& msg);
-		virtual int execute(Client& client);
+		void	execute(Client& client, Server& server);
 };
 
 #endif

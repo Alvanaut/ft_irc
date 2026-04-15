@@ -1,11 +1,11 @@
-#ifndef QUIT_HPP
-# define QUIT_HPP
+#ifndef MODE_HPP
+# define MODE_HPP
 
 # include "Command.hpp"
 
-class Quit : public Command {
+class Mode : public Command {
 	public:
-		Quit(const Message& msg);
+		Mode(const Message& msg);
 		void	execute(Client& client, Server& server);
 };
 

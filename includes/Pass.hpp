@@ -6,7 +6,7 @@
 class Pass: public Command {
 	public:
 		Pass(const Message& msg);
-		virtual int execute(Client& client);
+		void	execute(Client& client, Server& server);
 };
 
 #endif
