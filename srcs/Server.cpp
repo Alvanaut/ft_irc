@@ -86,7 +86,7 @@ int Server::setNonBlocking(int fd)
 		return (-1);
 	if (fcntl(fd, F_SETFL, flags | O_NONBLOCK) == -1)
 		return (-1);
-	return ;
+	return (0);
 }
 
 void Server::initSocket()
@@ -243,12 +243,7 @@ void Server::handleClientEvent(int fd)
 			break ;
 		std::string line = buf.substr(0, pos + 2);
 		it->second.eraseFromInputBuffer(pos + 2);
-		int result = processCommand(it->second, line);
-		if (result == -1)
-		{
-			disconnectClient(fd);
-			return ;
-		}
+		processCommand(it->second, line);
 	}
 }
 
@@ -353,7 +348,7 @@ const Client* Server::getClientByNick(const std::string& nick) const
 	return (NULL);
 }
 
-int Server::processCommand(Client& client, const std::string& line)
+void Server::processCommand(Client& client, const std::string& line)
 {
 	Message msg = parseMessage(line);
 	if (msg.command.empty())
@@ -399,9 +394,8 @@ int Server::processCommand(Client& client, const std::string& line)
 
 	if (!cmd)
 		return ;
-	int result = cmd->execute(client, *this);
+	cmd->execute(client, *this);
 	delete cmd;
-	return (result);
 }
 
 void Server::run()

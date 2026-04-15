@@ -25,13 +25,15 @@ private :
 	void	acceptNewClients();
 	void	handleClientEvent(int fd);
 	void	removeClientFromAllChannels(int fd);
-	void	disconnectClient(int fd);
 	int		setNonBlocking(int fd);
 public :
 	Server();
 	Server(char *port, char *pass);
 	~Server();
 	void run();
+
+	// This is only so that the QUIT command can access it
+	void				disconnectClient(int fd);
 
 	void				joinChannel(int fd, const std::string& channel_name);
 	void				sendToClient(int fd, const std::string& msg);
@@ -46,7 +48,7 @@ public :
 	Client*				getClientByFd(int fd);
 	const Client*		getClientByFd(int fd) const;
 	const Client*		getClientByNick(const std::string& nick) const;
-	int					processCommand(Client& client, const std::string& line);
+	void				processCommand(Client& client, const std::string& line);
 };
 
 #endif // SERVER_HPP

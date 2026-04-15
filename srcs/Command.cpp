@@ -64,7 +64,7 @@ bool isValidNickname(const std::string& name)
 	while (i < name.length())
 	{
 		char c = name[i];
-		if (std::isalnum(c) || std::string("-[]\\^{}").find(c) != std::string::npos)
+		if (std::isalnum(c) || std::string("_-[]\\^{}").find(c) != std::string::npos)
 			i++;
 		else
 			return false;

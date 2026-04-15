@@ -14,5 +14,5 @@ void Quit::execute(Client& client, Server& server)
 		":" + nick + "!" + user + "@ircserv QUIT :" + quitMsg + "\r\n");
 	server.sendToClient(client.getFd(),
 		"ERROR :Closing Link: " + nick + " (Quit: " + quitMsg + ")\r\n");
-	return (-1);
+	server.disconnectClient(client.getFd());
 }
