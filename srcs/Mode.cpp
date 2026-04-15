@@ -18,7 +18,7 @@ static void appendSign(std::string& modeStr, char& lastSign, char sign)
 	}
 }
 
-int Mode::execute(Client& client, Server& server)
+void Mode::execute(Client& client, Server& server)
 {
 	const std::string& nick = client.getNickname();
 	const std::string& user = client.getUsername();
@@ -26,7 +26,7 @@ int Mode::execute(Client& client, Server& server)
 	if (_msg.params.empty())
 	{
 		server.sendToClient(client.getFd(), ERR::needMoreParams(nick, "MODE"));
-		return (0);
+		return ;
 	}
 
 	const std::string& chanName = _msg.params[0];
@@ -35,22 +35,22 @@ int Mode::execute(Client& client, Server& server)
 	if (!ch)
 	{
 		server.sendToClient(client.getFd(), ERR::noSuchChannel(nick, chanName));
-		return (0);
+		return ;
 	}
 	if (!ch->hasMember(client.getFd()))
 	{
 		server.sendToClient(client.getFd(), ERR::notOnChannel(nick, chanName));
-		return (0);
+		return ;
 	}
 
 	// MODE sans modestring → afficher les modes actifs (comportement basique)
 	if (_msg.params.size() < 2)
-		return (0);
+		return ;
 
 	if (!ch->isOperator(client.getFd()))
 	{
 		server.sendToClient(client.getFd(), ERR::chanopPrivsNeeded(nick, chanName));
-		return (0);
+		return ;
 	}
 
 	const std::string& modeString = _msg.params[1];
@@ -176,5 +176,5 @@ int Mode::execute(Client& client, Server& server)
 		broadcast += "\r\n";
 		server.broadcastToChannel(chanName, broadcast);
 	}
-	return (0);
+	return ;
 }

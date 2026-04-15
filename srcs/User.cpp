@@ -5,19 +5,19 @@
 
 User::User(const Message& msg) : Command(msg) {}
 
-int User::execute(Client& client, Server& server)
+void User::execute(Client& client, Server& server)
 {
 	const std::string nick = client.getNickname().empty() ? "*" : client.getNickname();
 
 	if (_msg.params.size() < 4 || _msg.params[0].empty() || _msg.params[3].empty())
 	{
 		server.sendToClient(client.getFd(), ERR::needMoreParams(nick, "USER"));
-		return (0);
+		return ;
 	}
 	if (client.isRegistered())
 	{
 		server.sendToClient(client.getFd(), ERR::alreadyRegistered(nick));
-		return (0);
+		return ;
 	}
 	client.setUsername(_msg.params[0]);
 	client.setRealName(_msg.params[3]);
@@ -26,5 +26,5 @@ int User::execute(Client& client, Server& server)
 		client.setRegistered(true);
 		server.sendWelcome(client);
 	}
-	return (0);
+	return ;
 }

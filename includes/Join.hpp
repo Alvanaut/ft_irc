@@ -6,7 +6,7 @@
 class Join : public Command {
 	public:
 		Join(const Message& msg);
-		virtual int execute(Client& client, Server& server);
+		void	execute(Client& client, Server& server);
 };
 
 #endif

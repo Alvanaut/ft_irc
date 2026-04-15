@@ -6,7 +6,7 @@
 
 Topic::Topic(const Message& msg) : Command(msg) {}
 
-int Topic::execute(Client& client, Server& server)
+void Topic::execute(Client& client, Server& server)
 {
 	const std::string& nick = client.getNickname();
 	const std::string& user = client.getUsername();
@@ -14,7 +14,7 @@ int Topic::execute(Client& client, Server& server)
 	if (_msg.params.empty())
 	{
 		server.sendToClient(client.getFd(), ERR::needMoreParams(nick, "TOPIC"));
-		return (0);
+		return ;
 	}
 
 	const std::string& chanName = _msg.params[0];
@@ -23,12 +23,12 @@ int Topic::execute(Client& client, Server& server)
 	if (!ch)
 	{
 		server.sendToClient(client.getFd(), ERR::noSuchChannel(nick, chanName));
-		return (0);
+		return ;
 	}
 	if (!ch->hasMember(client.getFd()))
 	{
 		server.sendToClient(client.getFd(), ERR::notOnChannel(nick, chanName));
-		return (0);
+		return ;
 	}
 
 	// Lecture du topic (pas de 2e param)
@@ -38,14 +38,14 @@ int Topic::execute(Client& client, Server& server)
 			server.sendToClient(client.getFd(), RPL::noTopic(nick, chanName));
 		else
 			server.sendToClient(client.getFd(), RPL::topic(nick, chanName, ch->getTopic()));
-		return (0);
+		return ;
 	}
 
 	// Modification du topic
 	if (ch->isTopicRestricted() && !ch->isOperator(client.getFd()))
 	{
 		server.sendToClient(client.getFd(), ERR::chanopPrivsNeeded(nick, chanName));
-		return (0);
+		return ;
 	}
 
 	ch->setTopic(_msg.params[1]);
@@ -53,5 +53,5 @@ int Topic::execute(Client& client, Server& server)
 	const std::string broadcast = ":" + nick + "!" + user + "@ircserv TOPIC "
 		+ chanName + " :" + _msg.params[1] + "\r\n";
 	server.broadcastToChannel(chanName, broadcast);
-	return (0);
+	return ;
 }

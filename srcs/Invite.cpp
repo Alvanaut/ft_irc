@@ -6,7 +6,7 @@
 
 Invite::Invite(const Message& msg) : Command(msg) {}
 
-int Invite::execute(Client& client, Server& server)
+void Invite::execute(Client& client, Server& server)
 {
 	const std::string& nick = client.getNickname();
 	const std::string& user = client.getUsername();
@@ -14,7 +14,7 @@ int Invite::execute(Client& client, Server& server)
 	if (_msg.params.size() < 2)
 	{
 		server.sendToClient(client.getFd(), ERR::needMoreParams(nick, "INVITE"));
-		return (0);
+		return ;
 	}
 
 	const std::string& targetNick = _msg.params[0];
@@ -24,29 +24,29 @@ int Invite::execute(Client& client, Server& server)
 	if (!ch)
 	{
 		server.sendToClient(client.getFd(), ERR::noSuchChannel(nick, chanName));
-		return (0);
+		return ;
 	}
 	if (!ch->hasMember(client.getFd()))
 	{
 		server.sendToClient(client.getFd(), ERR::notOnChannel(nick, chanName));
-		return (0);
+		return ;
 	}
 	if (ch->isInviteOnly() && !ch->isOperator(client.getFd()))
 	{
 		server.sendToClient(client.getFd(), ERR::chanopPrivsNeeded(nick, chanName));
-		return (0);
+		return ;
 	}
 
 	const Client* target = server.getClientByNick(targetNick);
 	if (!target)
 	{
 		server.sendToClient(client.getFd(), ERR::noSuchNick(nick, targetNick));
-		return (0);
+		return ;
 	}
 	if (ch->hasMember(target->getFd()))
 	{
 		server.sendToClient(client.getFd(), ERR::userOnChannel(nick, targetNick, chanName));
-		return (0);
+		return ;
 	}
 
 	ch->addInvited(target->getFd());
@@ -54,5 +54,5 @@ int Invite::execute(Client& client, Server& server)
 	server.sendToClient(client.getFd(), RPL::inviting(nick, targetNick, chanName));
 	server.sendToClient(target->getFd(),
 		":" + nick + "!" + user + "@ircserv INVITE " + targetNick + " :" + chanName + "\r\n");
-	return (0);
+	return ;
 }

@@ -6,7 +6,7 @@
 class Privmsg : public Command {
 	public:
 		Privmsg(const Message& msg);
-		virtual int execute(Client& client, Server& server);
+		void	execute(Client& client, Server& server);
 };
 
 #endif

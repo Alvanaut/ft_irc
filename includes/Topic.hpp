@@ -6,7 +6,7 @@
 class Topic : public Command {
 	public:
 		Topic(const Message& msg);
-		virtual int execute(Client& client, Server& server);
+		void	execute(Client& client, Server& server);
 };
 
 #endif

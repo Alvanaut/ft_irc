@@ -96,14 +96,14 @@ static void joinOne(Client& client, Server& server,
 	server.sendToClient(client.getFd(), RPL::endOfNames(nick, chanName));
 }
 
-int Join::execute(Client& client, Server& server)
+void Join::execute(Client& client, Server& server)
 {
 	const std::string nick = client.getNickname();
 
 	if (_msg.params.empty() || _msg.params[0].empty())
 	{
 		server.sendToClient(client.getFd(), ERR::needMoreParams(nick, "JOIN"));
-		return (0);
+		return ;
 	}
 
 	std::vector<std::string> chans = split(_msg.params[0], ',');
@@ -116,5 +116,5 @@ int Join::execute(Client& client, Server& server)
 		const std::string key = (i < keys.size()) ? keys[i] : "";
 		joinOne(client, server, chans[i], key);
 	}
-	return (0);
+	return ;
 }

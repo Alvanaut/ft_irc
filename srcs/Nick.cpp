@@ -5,25 +5,25 @@
 
 Nick::Nick(const Message& msg) : Command(msg) {}
 
-int Nick::execute(Client& client, Server& server)
+void Nick::execute(Client& client, Server& server)
 {
 	const std::string currentNick = client.getNickname().empty() ? "*" : client.getNickname();
 
 	if (_msg.params.empty() || _msg.params[0].empty())
 	{
 		server.sendToClient(client.getFd(), ERR::noNicknameGiven(currentNick));
-		return (0);
+		return ;
 	}
 	const std::string& newNick = _msg.params[0];
 	if (!isValidNickname(newNick))
 	{
 		server.sendToClient(client.getFd(), ERR::erroneusNickname(currentNick, newNick));
-		return (0);
+		return ;
 	}
 	if (server.isNickTaken(newNick, client.getFd()))
 	{
 		server.sendToClient(client.getFd(), ERR::nicknameInUse(currentNick, newNick));
-		return (0);
+		return ;
 	}
 	client.setNickname(newNick);
 	if (!client.isRegistered() && client.registrationComplete())
@@ -31,5 +31,5 @@ int Nick::execute(Client& client, Server& server)
 		client.setRegistered(true);
 		server.sendWelcome(client);
 	}
-	return (0);
+	return ;
 }

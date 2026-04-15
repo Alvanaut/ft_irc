@@ -23,7 +23,7 @@ static std::vector<std::string> split(const std::string& s, char delim)
 	return (tokens);
 }
 
-int Part::execute(Client& client, Server& server)
+void Part::execute(Client& client, Server& server)
 {
 	const std::string& nick = client.getNickname();
 	const std::string& user = client.getUsername();
@@ -31,7 +31,7 @@ int Part::execute(Client& client, Server& server)
 	if (_msg.params.empty() || _msg.params[0].empty())
 	{
 		server.sendToClient(client.getFd(), ERR::needMoreParams(nick, "PART"));
-		return (0);
+		return ;
 	}
 
 	const std::string partMsg = (_msg.params.size() > 1 && !_msg.params[1].empty())
@@ -68,5 +68,5 @@ int Part::execute(Client& client, Server& server)
 		if (ch->empty())
 			server.removeChannel(chanName);
 	}
-	return (0);
+	return ;
 }

@@ -23,10 +23,10 @@ static std::vector<std::string> split(const std::string& s, char delim)
 }
 
 // NOTICE : même logique que PRIVMSG mais sans aucune réponse d'erreur
-int Notice::execute(Client& client, Server& server)
+void Notice::execute(Client& client, Server& server)
 {
 	if (_msg.params.size() < 2 || _msg.params[0].empty() || _msg.params[1].empty())
-		return (0);
+		return ;
 
 	const std::string& nick = client.getNickname();
 	const std::string& user = client.getUsername();
@@ -59,5 +59,5 @@ int Notice::execute(Client& client, Server& server)
 				server.sendToClient(dest->getFd(), msg);
 		}
 	}
-	return (0);
+	return ;
 }

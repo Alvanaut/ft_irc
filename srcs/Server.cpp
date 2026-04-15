@@ -86,7 +86,7 @@ int Server::setNonBlocking(int fd)
 		return (-1);
 	if (fcntl(fd, F_SETFL, flags | O_NONBLOCK) == -1)
 		return (-1);
-	return (0);
+	return ;
 }
 
 void Server::initSocket()
@@ -357,7 +357,7 @@ int Server::processCommand(Client& client, const std::string& line)
 {
 	Message msg = parseMessage(line);
 	if (msg.command.empty())
-		return (0);
+		return ;
 
 	const std::string& nick = client.getNickname().empty() ? std::string("*") : client.getNickname();
 
@@ -392,13 +392,13 @@ int Server::processCommand(Client& client, const std::string& line)
 			sendToClient(client.getFd(), ":ircserv 409 " + nick + " :No origin specified\r\n");
 		else
 			sendToClient(client.getFd(), "PONG ircserv :" + msg.params[0] + "\r\n");
-		return (0);
+		return ;
 	}
 	else if (msg.command == "PONG")
-		return (0);
+		return ;
 
 	if (!cmd)
-		return (0);
+		return ;
 	int result = cmd->execute(client, *this);
 	delete cmd;
 	return (result);

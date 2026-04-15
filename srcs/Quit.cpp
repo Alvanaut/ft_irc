@@ -4,7 +4,7 @@
 
 Quit::Quit(const Message& msg) : Command(msg) {}
 
-int Quit::execute(Client& client, Server& server)
+void Quit::execute(Client& client, Server& server)
 {
 	const std::string quitMsg = _msg.params.empty() ? client.getNickname() : _msg.params[0];
 	const std::string nick = client.getNickname().empty() ? "*" : client.getNickname();

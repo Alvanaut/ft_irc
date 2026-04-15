@@ -25,7 +25,7 @@ class Command {
 		virtual ~Command();
 		Command(const Message& msg);
 
-		virtual int execute(Client& client, Server& server) = 0;
+		virtual void	execute(Client& client, Server& server) = 0;
 
 };
 #endif

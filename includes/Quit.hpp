@@ -6,7 +6,7 @@
 class Quit : public Command {
 	public:
 		Quit(const Message& msg);
-		virtual int execute(Client& client, Server& server);
+		void	execute(Client& client, Server& server);
 };
 
 #endif

@@ -6,7 +6,7 @@
 class Mode : public Command {
 	public:
 		Mode(const Message& msg);
-		virtual int execute(Client& client, Server& server);
+		void	execute(Client& client, Server& server);
 };
 
 #endif

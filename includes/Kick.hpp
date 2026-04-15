@@ -6,7 +6,7 @@
 class Kick : public Command {
 	public:
 		Kick(const Message& msg);
-		virtual int execute(Client& client, Server& server);
+		void	execute(Client& client, Server& server);
 };
 
 #endif

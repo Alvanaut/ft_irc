@@ -67,19 +67,19 @@ static void sendToTarget(Client& client, Server& server,
 	}
 }
 
-int Privmsg::execute(Client& client, Server& server)
+void Privmsg::execute(Client& client, Server& server)
 {
 	const std::string& nick = client.getNickname();
 
 	if (_msg.params.empty() || _msg.params[0].empty())
 	{
 		server.sendToClient(client.getFd(), ERR::noRecipient(nick, "PRIVMSG"));
-		return (0);
+		return ;
 	}
 	if (_msg.params.size() < 2 || _msg.params[1].empty())
 	{
 		server.sendToClient(client.getFd(), ERR::noTextToSend(nick));
-		return (0);
+		return ;
 	}
 
 	std::vector<std::string> targets = split(_msg.params[0], ',');
@@ -87,5 +87,5 @@ int Privmsg::execute(Client& client, Server& server)
 
 	for (size_t i = 0; i < targets.size(); ++i)
 		sendToTarget(client, server, targets[i], text, true);
-	return (0);
+	return ;
 }
