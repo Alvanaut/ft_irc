@@ -22,6 +22,7 @@
 #include <iostream>
 #include <stdexcept>
 #include <sys/socket.h>
+#include <signal.h>
 #include <unistd.h>
 
 namespace
@@ -31,6 +32,11 @@ namespace
 }
 
 int g_server_should_run = 1;
+
+static void handleSignal(int)
+{
+	g_server_should_run = 0;
+}
 
 Server::Server() : port(0), password(), listen_fd(-1), epoll_fd(-1)
 {
@@ -51,12 +57,7 @@ Server::Server(char *port_arg, char *pass)
 
 Server::~Server()
 {
-	for (std::map<int, Client>::iterator it = clients.begin(); it != clients.end(); ++it)
-		close(it->first);
-	if (listen_fd >= 0)
-		close(listen_fd);
-	if (epoll_fd >= 0)
-		close(epoll_fd);
+	cleanup();
 }
 
 Server::Server(const Server& other)
@@ -160,6 +161,27 @@ void Server::joinChannel(int fd, const std::string& channel_name)
 	}
 	channel_it->second.addMember(fd);
 	client_it->second.joinChannel(channel_name);
+}
+
+void Server::cleanup()
+{
+	for (std::map<int, Client>::iterator it = clients.begin(); it != clients.end(); ++it)
+	{
+		epoll_ctl(epoll_fd, EPOLL_CTL_DEL, it->first, NULL);
+		close(it->first);
+	}
+	clients.clear();
+	channels.clear();
+	if (listen_fd >= 0)
+	{
+		close(listen_fd);
+		listen_fd = -1;
+	}
+	if (epoll_fd >= 0)
+	{
+		close(epoll_fd);
+		epoll_fd = -1;
+	}
 }
 
 void Server::disconnectClient(int fd)
@@ -400,6 +422,13 @@ void Server::processCommand(Client& client, const std::string& line)
 
 void Server::run()
 {
+	struct sigaction sa;
+	std::memset(&sa, 0, sizeof(sa));
+	sa.sa_handler = handleSignal;
+	sigemptyset(&sa.sa_mask);
+	sigaction(SIGINT, &sa, NULL);
+	sigaction(SIGTERM, &sa, NULL);
+
 	struct epoll_event events[kMaxEvents];
 
 	while (g_server_should_run)
@@ -428,4 +457,5 @@ void Server::run()
 				handleClientEvent(fd);
 		}
 	}
+	cleanup();
 }
