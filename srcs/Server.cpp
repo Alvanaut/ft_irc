@@ -5,6 +5,9 @@
 #include "../includes/User.hpp"
 #include "../includes/Quit.hpp"
 #include "../includes/Join.hpp"
+#include "../includes/Privmsg.hpp"
+#include "../includes/Notice.hpp"
+#include "../includes/Part.hpp"
 #include "../includes/Replies.hpp"
 
 #include <arpa/inet.h>
@@ -307,6 +310,11 @@ void Server::broadcastToChannel(const std::string& channel_name, const std::stri
 		sendToClient(*m, msg);
 }
 
+void Server::removeChannel(const std::string& name)
+{
+	channels.erase(name);
+}
+
 Channel* Server::getChannel(const std::string& name)
 {
 	std::map<std::string, Channel>::iterator it = channels.find(name);
@@ -321,6 +329,16 @@ const Client* Server::getClientByFd(int fd) const
 	if (it == clients.end())
 		return (NULL);
 	return (&it->second);
+}
+
+const Client* Server::getClientByNick(const std::string& nick) const
+{
+	for (std::map<int, Client>::const_iterator it = clients.begin(); it != clients.end(); ++it)
+	{
+		if (it->second.getNickname() == nick)
+			return (&it->second);
+	}
+	return (NULL);
 }
 
 int Server::processCommand(Client& client, const std::string& line)
@@ -342,6 +360,12 @@ int Server::processCommand(Client& client, const std::string& line)
 		cmd = new Quit(msg);
 	else if (msg.command == "JOIN")
 		cmd = new Join(msg);
+	else if (msg.command == "PART")
+		cmd = new Part(msg);
+	else if (msg.command == "PRIVMSG")
+		cmd = new Privmsg(msg);
+	else if (msg.command == "NOTICE")
+		cmd = new Notice(msg);
 	else if (msg.command == "PING")
 	{
 		if (msg.params.empty())
