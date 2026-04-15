@@ -1,11 +1,11 @@
-#ifndef PASS_HPP
-# define PASS_HPP
+#ifndef JOIN_HPP
+# define JOIN_HPP
 
 # include "Command.hpp"
 
-class Pass: public Command {
+class Join : public Command {
 	public:
-		Pass(const Message& msg);
+		Join(const Message& msg);
 		virtual int execute(Client& client, Server& server);
 };
 

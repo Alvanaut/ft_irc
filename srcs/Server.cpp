@@ -1,4 +1,10 @@
-#include "Server.hpp"
+#include "../includes/Server.hpp"
+#include "../includes/Command.hpp"
+#include "../includes/Pass.hpp"
+#include "../includes/Nick.hpp"
+#include "../includes/User.hpp"
+#include "../includes/Quit.hpp"
+#include "../includes/Join.hpp"
 
 #include <arpa/inet.h>
 #include <cerrno>
@@ -220,8 +226,137 @@ void Server::handleClientEvent(int fd)
 		return ;
 	}
 	it->second.appendToInputBuffer(std::string(buffer, bytes));
-	std::cout << "Received " << bytes << " bytes from fd=" << fd
-		<< ", buffered=" << it->second.getInputBuffer().size() << std::endl;
+
+	while (true)
+	{
+		const std::string& buf = it->second.getInputBuffer();
+		size_t pos = buf.find("\r\n");
+		if (pos == std::string::npos)
+			break ;
+		std::string line = buf.substr(0, pos + 2);
+		it->second.eraseFromInputBuffer(pos + 2);
+		int result = processCommand(it->second, line);
+		if (result == -1)
+		{
+			disconnectClient(fd);
+			return ;
+		}
+	}
+}
+
+void Server::sendToClient(int fd, const std::string& msg)
+{
+	send(fd, msg.c_str(), msg.size(), 0);
+}
+
+const std::string& Server::getPassword() const
+{
+	return (password);
+}
+
+std::string Server::getServerName() const
+{
+	return ("ircserv");
+}
+
+bool Server::isNickTaken(const std::string& nick, int exclude_fd) const
+{
+	for (std::map<int, Client>::const_iterator it = clients.begin(); it != clients.end(); ++it)
+	{
+		if (it->first != exclude_fd && it->second.getNickname() == nick)
+			return (true);
+	}
+	return (false);
+}
+
+void Server::sendWelcome(Client& client)
+{
+	const std::string& nick = client.getNickname();
+	const std::string& user = client.getUsername();
+	sendToClient(client.getFd(), ":ircserv 001 " + nick + " :Welcome to the IRC Network " + nick + "!" + user + "@ircserv\r\n");
+	sendToClient(client.getFd(), ":ircserv 002 " + nick + " :Your host is ircserv, running version 1.0\r\n");
+	sendToClient(client.getFd(), ":ircserv 003 " + nick + " :This server was created long ago\r\n");
+	sendToClient(client.getFd(), ":ircserv 004 " + nick + " ircserv 1.0 io itkol\r\n");
+}
+
+void Server::broadcastToClientChannels(const Client& client, const std::string& msg)
+{
+	const std::set<std::string>& joined = client.getChannelsJoined();
+	for (std::set<std::string>::const_iterator it = joined.begin(); it != joined.end(); ++it)
+	{
+		std::map<std::string, Channel>::iterator ch = channels.find(*it);
+		if (ch == channels.end())
+			continue ;
+		const std::set<int>& members = ch->second.getMembers();
+		for (std::set<int>::const_iterator m = members.begin(); m != members.end(); ++m)
+		{
+			if (*m != client.getFd())
+				sendToClient(*m, msg);
+		}
+	}
+}
+
+void Server::broadcastToChannel(const std::string& channel_name, const std::string& msg)
+{
+	std::map<std::string, Channel>::iterator ch = channels.find(channel_name);
+	if (ch == channels.end())
+		return ;
+	const std::set<int>& members = ch->second.getMembers();
+	for (std::set<int>::const_iterator m = members.begin(); m != members.end(); ++m)
+		sendToClient(*m, msg);
+}
+
+Channel* Server::getChannel(const std::string& name)
+{
+	std::map<std::string, Channel>::iterator it = channels.find(name);
+	if (it == channels.end())
+		return (NULL);
+	return (&it->second);
+}
+
+const Client* Server::getClientByFd(int fd) const
+{
+	std::map<int, Client>::const_iterator it = clients.find(fd);
+	if (it == clients.end())
+		return (NULL);
+	return (&it->second);
+}
+
+int Server::processCommand(Client& client, const std::string& line)
+{
+	Message msg = parseMessage(line);
+	if (msg.command.empty())
+		return (0);
+
+	const std::string& nick = client.getNickname().empty() ? std::string("*") : client.getNickname();
+
+	Command* cmd = NULL;
+	if (msg.command == "PASS")
+		cmd = new Pass(msg);
+	else if (msg.command == "NICK")
+		cmd = new Nick(msg);
+	else if (msg.command == "USER")
+		cmd = new User(msg);
+	else if (msg.command == "QUIT")
+		cmd = new Quit(msg);
+	else if (msg.command == "JOIN")
+		cmd = new Join(msg);
+	else if (msg.command == "PING")
+	{
+		if (msg.params.empty())
+			sendToClient(client.getFd(), ":ircserv 409 " + nick + " :No origin specified\r\n");
+		else
+			sendToClient(client.getFd(), "PONG ircserv :" + msg.params[0] + "\r\n");
+		return (0);
+	}
+	else if (msg.command == "PONG")
+		return (0);
+
+	if (!cmd)
+		return (0);
+	int result = cmd->execute(client, *this);
+	delete cmd;
+	return (result);
 }
 
 void Server::run()

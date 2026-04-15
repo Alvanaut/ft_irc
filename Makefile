@@ -8,7 +8,12 @@ SRCS = srcs/main.cpp \
 	srcs/Command.cpp \
 	srcs/Channel.cpp \
 	srcs/Client.cpp \
-	srcs/Server.cpp
+	srcs/Server.cpp \
+	srcs/Pass.cpp \
+	srcs/Nick.cpp \
+	srcs/User.cpp \
+	srcs/Quit.cpp \
+	srcs/Join.cpp
 
 INCD = includes/
 

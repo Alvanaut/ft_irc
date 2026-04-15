@@ -24,7 +24,6 @@ private :
 	void	initEpoll();
 	void	acceptNewClients();
 	void	handleClientEvent(int fd);
-	void	joinChannel(int fd, const std::string& channel_name);
 	void	removeClientFromAllChannels(int fd);
 	void	disconnectClient(int fd);
 	int		setNonBlocking(int fd);
@@ -33,6 +32,18 @@ public :
 	Server(char *port, char *pass);
 	~Server();
 	void run();
+
+	void				joinChannel(int fd, const std::string& channel_name);
+	void				sendToClient(int fd, const std::string& msg);
+	const std::string&	getPassword() const;
+	std::string			getServerName() const;
+	bool				isNickTaken(const std::string& nick, int exclude_fd) const;
+	void				sendWelcome(Client& client);
+	void				broadcastToClientChannels(const Client& client, const std::string& msg);
+	void				broadcastToChannel(const std::string& channel_name, const std::string& msg);
+	Channel*			getChannel(const std::string& name);
+	const Client*		getClientByFd(int fd) const;
+	int					processCommand(Client& client, const std::string& line);
 };
 
 #endif // SERVER_HPP
