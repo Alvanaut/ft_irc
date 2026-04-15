@@ -2,10 +2,10 @@
 #include "../includes/Server.hpp"
 #include "../includes/Client.hpp"
 #include "../includes/Channel.hpp"
+#include "../includes/Replies.hpp"
 
 Join::Join(const Message& msg) : Command(msg) {}
 
-// Split une string par un délimiteur
 static std::vector<std::string> split(const std::string& s, char delim)
 {
 	std::vector<std::string> tokens;
@@ -23,7 +23,6 @@ static std::vector<std::string> split(const std::string& s, char delim)
 	return (tokens);
 }
 
-// Construit la liste des noms du channel avec @ pour les ops
 static std::string buildNamesList(const Channel& ch, const Server& server)
 {
 	std::string names;
@@ -45,63 +44,56 @@ static std::string buildNamesList(const Channel& ch, const Server& server)
 static void joinOne(Client& client, Server& server,
 					const std::string& chanName, const std::string& key)
 {
-	const std::string nick = client.getNickname();
-	const std::string user = client.getUsername();
-	const std::string prefix = ":" + nick + "!" + user + "@ircserv";
+	const std::string& nick = client.getNickname();
+	const std::string& user = client.getUsername();
+	const std::string  prefix = ":" + nick + "!" + user + "@ircserv";
 
 	if (!isValidChannelName(chanName))
 	{
-		server.sendToClient(client.getFd(), ":ircserv 476 " + nick + " " + chanName + " :Bad Channel Mask\r\n");
+		server.sendToClient(client.getFd(), ERR::badChanMask(nick, chanName));
 		return ;
 	}
-
-	// Déjà dans le channel → ignorer
 	if (client.isInChannel(chanName))
 		return ;
 
 	Channel* ch = server.getChannel(chanName);
-
 	if (ch)
 	{
-		// Vérifications seulement si le channel existe déjà
 		if (ch->isInviteOnly() && !ch->isInvited(client.getFd()))
 		{
-			server.sendToClient(client.getFd(), ":ircserv 473 " + nick + " " + chanName + " :Cannot join channel (+i)\r\n");
+			server.sendToClient(client.getFd(), ERR::inviteOnlyChan(nick, chanName));
 			return ;
 		}
 		if (!ch->getKey().empty() && ch->getKey() != key)
 		{
-			server.sendToClient(client.getFd(), ":ircserv 475 " + nick + " " + chanName + " :Cannot join channel (+k)\r\n");
+			server.sendToClient(client.getFd(), ERR::badChannelKey(nick, chanName));
 			return ;
 		}
 		if (ch->getUserLimit() > 0 && (int)ch->getMembers().size() >= ch->getUserLimit())
 		{
-			server.sendToClient(client.getFd(), ":ircserv 471 " + nick + " " + chanName + " :Cannot join channel (+l)\r\n");
+			server.sendToClient(client.getFd(), ERR::channelIsFull(nick, chanName));
 			return ;
 		}
 	}
 
 	bool isNew = (ch == NULL);
-	server.joinChannel(client.getFd(), chanName);         // crée si besoin + addMember
+	server.joinChannel(client.getFd(), chanName);
 	ch = server.getChannel(chanName);
 
 	if (isNew)
-		ch->addOperator(client.getFd());                  // premier arrivé = op
+		ch->addOperator(client.getFd());
 	if (ch->isInvited(client.getFd()))
 		ch->removeInvited(client.getFd());
 
-	// Broadcast JOIN à tout le channel (y compris le joiner)
 	server.broadcastToChannel(chanName, prefix + " JOIN :" + chanName + "\r\n");
 
-	// Topic
 	if (ch->getTopic().empty())
-		server.sendToClient(client.getFd(), ":ircserv 331 " + nick + " " + chanName + " :No topic is set\r\n");
+		server.sendToClient(client.getFd(), RPL::noTopic(nick, chanName));
 	else
-		server.sendToClient(client.getFd(), ":ircserv 332 " + nick + " " + chanName + " :" + ch->getTopic() + "\r\n");
+		server.sendToClient(client.getFd(), RPL::topic(nick, chanName, ch->getTopic()));
 
-	// NAMES
-	server.sendToClient(client.getFd(), ":ircserv 353 " + nick + " = " + chanName + " :" + buildNamesList(*ch, server) + "\r\n");
-	server.sendToClient(client.getFd(), ":ircserv 366 " + nick + " " + chanName + " :End of /NAMES list\r\n");
+	server.sendToClient(client.getFd(), RPL::namReply(nick, chanName, buildNamesList(*ch, server)));
+	server.sendToClient(client.getFd(), RPL::endOfNames(nick, chanName));
 }
 
 int Join::execute(Client& client, Server& server)
@@ -110,7 +102,7 @@ int Join::execute(Client& client, Server& server)
 
 	if (_msg.params.empty() || _msg.params[0].empty())
 	{
-		server.sendToClient(client.getFd(), ":ircserv 461 " + nick + " JOIN :Not enough parameters\r\n");
+		server.sendToClient(client.getFd(), ERR::needMoreParams(nick, "JOIN"));
 		return (0);
 	}
 

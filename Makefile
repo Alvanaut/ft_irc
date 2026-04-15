@@ -13,7 +13,8 @@ SRCS = srcs/main.cpp \
 	srcs/Nick.cpp \
 	srcs/User.cpp \
 	srcs/Quit.cpp \
-	srcs/Join.cpp
+	srcs/Join.cpp \
+	srcs/Replies.cpp
 
 INCD = includes/
 

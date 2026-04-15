@@ -5,6 +5,7 @@
 #include "../includes/User.hpp"
 #include "../includes/Quit.hpp"
 #include "../includes/Join.hpp"
+#include "../includes/Replies.hpp"
 
 #include <arpa/inet.h>
 #include <cerrno>
@@ -273,10 +274,10 @@ void Server::sendWelcome(Client& client)
 {
 	const std::string& nick = client.getNickname();
 	const std::string& user = client.getUsername();
-	sendToClient(client.getFd(), ":ircserv 001 " + nick + " :Welcome to the IRC Network " + nick + "!" + user + "@ircserv\r\n");
-	sendToClient(client.getFd(), ":ircserv 002 " + nick + " :Your host is ircserv, running version 1.0\r\n");
-	sendToClient(client.getFd(), ":ircserv 003 " + nick + " :This server was created long ago\r\n");
-	sendToClient(client.getFd(), ":ircserv 004 " + nick + " ircserv 1.0 io itkol\r\n");
+	sendToClient(client.getFd(), RPL::welcome(nick, user));
+	sendToClient(client.getFd(), RPL::yourHost(nick));
+	sendToClient(client.getFd(), RPL::created(nick));
+	sendToClient(client.getFd(), RPL::myInfo(nick));
 }
 
 void Server::broadcastToClientChannels(const Client& client, const std::string& msg)

@@ -1,6 +1,7 @@
 #include "../includes/User.hpp"
 #include "../includes/Server.hpp"
 #include "../includes/Client.hpp"
+#include "../includes/Replies.hpp"
 
 User::User(const Message& msg) : Command(msg) {}
 
@@ -10,12 +11,12 @@ int User::execute(Client& client, Server& server)
 
 	if (_msg.params.size() < 4 || _msg.params[0].empty() || _msg.params[3].empty())
 	{
-		server.sendToClient(client.getFd(), ":ircserv 461 " + nick + " USER :Not enough parameters\r\n");
+		server.sendToClient(client.getFd(), ERR::needMoreParams(nick, "USER"));
 		return (0);
 	}
 	if (client.isRegistered())
 	{
-		server.sendToClient(client.getFd(), ":ircserv 462 " + nick + " :You may not reregister\r\n");
+		server.sendToClient(client.getFd(), ERR::alreadyRegistered(nick));
 		return (0);
 	}
 	client.setUsername(_msg.params[0]);

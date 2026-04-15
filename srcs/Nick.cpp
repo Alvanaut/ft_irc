@@ -1,6 +1,7 @@
 #include "../includes/Nick.hpp"
 #include "../includes/Server.hpp"
 #include "../includes/Client.hpp"
+#include "../includes/Replies.hpp"
 
 Nick::Nick(const Message& msg) : Command(msg) {}
 
@@ -10,18 +11,18 @@ int Nick::execute(Client& client, Server& server)
 
 	if (_msg.params.empty() || _msg.params[0].empty())
 	{
-		server.sendToClient(client.getFd(), ":ircserv 431 " + currentNick + " :No nickname given\r\n");
+		server.sendToClient(client.getFd(), ERR::noNicknameGiven(currentNick));
 		return (0);
 	}
 	const std::string& newNick = _msg.params[0];
 	if (!isValidNickname(newNick))
 	{
-		server.sendToClient(client.getFd(), ":ircserv 432 " + currentNick + " " + newNick + " :Erroneous nickname\r\n");
+		server.sendToClient(client.getFd(), ERR::erroneusNickname(currentNick, newNick));
 		return (0);
 	}
 	if (server.isNickTaken(newNick, client.getFd()))
 	{
-		server.sendToClient(client.getFd(), ":ircserv 433 " + currentNick + " " + newNick + " :Nickname is already in use\r\n");
+		server.sendToClient(client.getFd(), ERR::nicknameInUse(currentNick, newNick));
 		return (0);
 	}
 	client.setNickname(newNick);
