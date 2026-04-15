@@ -1,6 +1,6 @@
-#include "../includes/Quit.hpp"
-#include "../includes/Server.hpp"
-#include "../includes/Client.hpp"
+#include "../../includes/commands/Quit.hpp"
+#include "../../includes/Server.hpp"
+#include "../../includes/Client.hpp"
 
 Quit::Quit(const Message& msg) : Command(msg) {}
 

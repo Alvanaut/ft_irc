@@ -1,8 +1,8 @@
-#include "../includes/Privmsg.hpp"
-#include "../includes/Server.hpp"
-#include "../includes/Client.hpp"
-#include "../includes/Channel.hpp"
-#include "../includes/Replies.hpp"
+#include "../../includes/commands/Privmsg.hpp"
+#include "../../includes/Server.hpp"
+#include "../../includes/Client.hpp"
+#include "../../includes/Channel.hpp"
+#include "../../includes/Replies.hpp"
 
 Privmsg::Privmsg(const Message& msg) : Command(msg) {}
 

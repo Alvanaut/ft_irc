@@ -1,8 +1,8 @@
-#include "../includes/Part.hpp"
-#include "../includes/Server.hpp"
-#include "../includes/Client.hpp"
-#include "../includes/Channel.hpp"
-#include "../includes/Replies.hpp"
+#include "../../includes/commands/Part.hpp"
+#include "../../includes/Server.hpp"
+#include "../../includes/Client.hpp"
+#include "../../includes/Channel.hpp"
+#include "../../includes/Replies.hpp"
 
 Part::Part(const Message& msg) : Command(msg) {}
 

@@ -25,6 +25,7 @@ private :
 	void	acceptNewClients();
 	void	handleClientEvent(int fd);
 	void	removeClientFromAllChannels(int fd);
+	void	cleanup();
 	int		setNonBlocking(int fd);
 public :
 	Server();

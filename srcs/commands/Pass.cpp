@@ -1,7 +1,7 @@
-#include "../includes/Pass.hpp"
-#include "../includes/Server.hpp"
-#include "../includes/Client.hpp"
-#include "../includes/Replies.hpp"
+#include "../../includes/commands/Pass.hpp"
+#include "../../includes/Server.hpp"
+#include "../../includes/Client.hpp"
+#include "../../includes/Replies.hpp"
 
 Pass::Pass(const Message& msg) : Command(msg) {}
 

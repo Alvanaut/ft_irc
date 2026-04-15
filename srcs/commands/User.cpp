@@ -1,7 +1,7 @@
-#include "../includes/User.hpp"
-#include "../includes/Server.hpp"
-#include "../includes/Client.hpp"
-#include "../includes/Replies.hpp"
+#include "../../includes/commands/User.hpp"
+#include "../../includes/Server.hpp"
+#include "../../includes/Client.hpp"
+#include "../../includes/Replies.hpp"
 
 User::User(const Message& msg) : Command(msg) {}
 

@@ -1,8 +1,8 @@
-#include "../includes/Topic.hpp"
-#include "../includes/Server.hpp"
-#include "../includes/Client.hpp"
-#include "../includes/Channel.hpp"
-#include "../includes/Replies.hpp"
+#include "../../includes/commands/Topic.hpp"
+#include "../../includes/Server.hpp"
+#include "../../includes/Client.hpp"
+#include "../../includes/Channel.hpp"
+#include "../../includes/Replies.hpp"
 
 Topic::Topic(const Message& msg) : Command(msg) {}
 

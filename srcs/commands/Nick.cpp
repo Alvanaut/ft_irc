@@ -1,7 +1,7 @@
-#include "../includes/Nick.hpp"
-#include "../includes/Server.hpp"
-#include "../includes/Client.hpp"
-#include "../includes/Replies.hpp"
+#include "../../includes/commands/Nick.hpp"
+#include "../../includes/Server.hpp"
+#include "../../includes/Client.hpp"
+#include "../../includes/Replies.hpp"
 
 Nick::Nick(const Message& msg) : Command(msg) {}
 

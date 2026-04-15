@@ -1,7 +1,7 @@
 #ifndef JOIN_HPP
 # define JOIN_HPP
 
-# include "Command.hpp"
+# include "../Command.hpp"
 
 class Join : public Command {
 	public:

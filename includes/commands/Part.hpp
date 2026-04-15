@@ -1,7 +1,7 @@
 #ifndef PART_HPP
 # define PART_HPP
 
-# include "Command.hpp"
+# include "../Command.hpp"
 
 class Part : public Command {
 	public:

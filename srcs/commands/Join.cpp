@@ -1,8 +1,8 @@
-#include "../includes/Join.hpp"
-#include "../includes/Server.hpp"
-#include "../includes/Client.hpp"
-#include "../includes/Channel.hpp"
-#include "../includes/Replies.hpp"
+#include "../../includes/commands/Join.hpp"
+#include "../../includes/Server.hpp"
+#include "../../includes/Client.hpp"
+#include "../../includes/Channel.hpp"
+#include "../../includes/Replies.hpp"
 
 Join::Join(const Message& msg) : Command(msg) {}
 

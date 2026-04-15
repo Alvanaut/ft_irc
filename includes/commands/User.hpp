@@ -1,7 +1,7 @@
 #ifndef USER_HPP
 # define USER_HPP
 
-# include "Command.hpp"
+# include "../Command.hpp"
 
 class User : public Command {
 	public:
