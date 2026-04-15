@@ -17,7 +17,11 @@ SRCS = srcs/main.cpp \
 	srcs/Replies.cpp \
 	srcs/Privmsg.cpp \
 	srcs/Notice.cpp \
-	srcs/Part.cpp
+	srcs/Part.cpp \
+	srcs/Topic.cpp \
+	srcs/Invite.cpp \
+	srcs/Kick.cpp \
+	srcs/Mode.cpp
 
 INCD = includes/
 

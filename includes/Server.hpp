@@ -43,6 +43,7 @@ public :
 	void				broadcastToChannel(const std::string& channel_name, const std::string& msg);
 	Channel*			getChannel(const std::string& name);
 	void				removeChannel(const std::string& name);
+	Client*				getClientByFd(int fd);
 	const Client*		getClientByFd(int fd) const;
 	const Client*		getClientByNick(const std::string& nick) const;
 	int					processCommand(Client& client, const std::string& line);

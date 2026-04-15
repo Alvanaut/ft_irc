@@ -8,6 +8,10 @@
 #include "../includes/Privmsg.hpp"
 #include "../includes/Notice.hpp"
 #include "../includes/Part.hpp"
+#include "../includes/Topic.hpp"
+#include "../includes/Invite.hpp"
+#include "../includes/Kick.hpp"
+#include "../includes/Mode.hpp"
 #include "../includes/Replies.hpp"
 
 #include <arpa/inet.h>
@@ -323,6 +327,14 @@ Channel* Server::getChannel(const std::string& name)
 	return (&it->second);
 }
 
+Client* Server::getClientByFd(int fd)
+{
+	std::map<int, Client>::iterator it = clients.find(fd);
+	if (it == clients.end())
+		return (NULL);
+	return (&it->second);
+}
+
 const Client* Server::getClientByFd(int fd) const
 {
 	std::map<int, Client>::const_iterator it = clients.find(fd);
@@ -366,6 +378,14 @@ int Server::processCommand(Client& client, const std::string& line)
 		cmd = new Privmsg(msg);
 	else if (msg.command == "NOTICE")
 		cmd = new Notice(msg);
+	else if (msg.command == "TOPIC")
+		cmd = new Topic(msg);
+	else if (msg.command == "INVITE")
+		cmd = new Invite(msg);
+	else if (msg.command == "KICK")
+		cmd = new Kick(msg);
+	else if (msg.command == "MODE")
+		cmd = new Mode(msg);
 	else if (msg.command == "PING")
 	{
 		if (msg.params.empty())
