@@ -1,7 +1,7 @@
 #ifndef PASS_HPP
 # define PASS_HPP
 
-# include "Command.hpp"
+# include "../Command.hpp"
 
 class Pass: public Command {
 	public:

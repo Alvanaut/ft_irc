@@ -1,7 +1,7 @@
 #ifndef TOPIC_HPP
 # define TOPIC_HPP
 
-# include "Command.hpp"
+# include "../Command.hpp"
 
 class Topic : public Command {
 	public:

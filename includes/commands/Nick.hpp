@@ -1,7 +1,7 @@
 #ifndef NICK_HPP
 # define NICK_HPP
 
-# include "Command.hpp"
+# include "../Command.hpp"
 
 class Nick: public Command {
 	public:

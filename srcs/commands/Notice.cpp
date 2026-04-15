@@ -1,7 +1,7 @@
-#include "../includes/Notice.hpp"
-#include "../includes/Server.hpp"
-#include "../includes/Client.hpp"
-#include "../includes/Channel.hpp"
+#include "../../includes/commands/Notice.hpp"
+#include "../../includes/Server.hpp"
+#include "../../includes/Client.hpp"
+#include "../../includes/Channel.hpp"
 
 Notice::Notice(const Message& msg) : Command(msg) {}
 

@@ -1,8 +1,8 @@
-#include "../includes/Invite.hpp"
-#include "../includes/Server.hpp"
-#include "../includes/Client.hpp"
-#include "../includes/Channel.hpp"
-#include "../includes/Replies.hpp"
+#include "../../includes/commands/Invite.hpp"
+#include "../../includes/Server.hpp"
+#include "../../includes/Client.hpp"
+#include "../../includes/Channel.hpp"
+#include "../../includes/Replies.hpp"
 
 Invite::Invite(const Message& msg) : Command(msg) {}
 

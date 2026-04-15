@@ -1,7 +1,7 @@
 #ifndef KICK_HPP
 # define KICK_HPP
 
-# include "Command.hpp"
+# include "../Command.hpp"
 
 class Kick : public Command {
 	public:

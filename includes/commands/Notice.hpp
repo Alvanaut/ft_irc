@@ -1,7 +1,7 @@
 #ifndef NOTICE_HPP
 # define NOTICE_HPP
 
-# include "Command.hpp"
+# include "../Command.hpp"
 
 class Notice : public Command {
 	public:

@@ -9,19 +9,19 @@ SRCS = srcs/main.cpp \
 	srcs/Channel.cpp \
 	srcs/Client.cpp \
 	srcs/Server.cpp \
-	srcs/Pass.cpp \
-	srcs/Nick.cpp \
-	srcs/User.cpp \
-	srcs/Quit.cpp \
-	srcs/Join.cpp \
 	srcs/Replies.cpp \
-	srcs/Privmsg.cpp \
-	srcs/Notice.cpp \
-	srcs/Part.cpp \
-	srcs/Topic.cpp \
-	srcs/Invite.cpp \
-	srcs/Kick.cpp \
-	srcs/Mode.cpp
+	srcs/commands/Pass.cpp \
+	srcs/commands/Nick.cpp \
+	srcs/commands/User.cpp \
+	srcs/commands/Quit.cpp \
+	srcs/commands/Join.cpp \
+	srcs/commands/Privmsg.cpp \
+	srcs/commands/Notice.cpp \
+	srcs/commands/Part.cpp \
+	srcs/commands/Topic.cpp \
+	srcs/commands/Invite.cpp \
+	srcs/commands/Kick.cpp \
+	srcs/commands/Mode.cpp
 
 INCD = includes/
 
