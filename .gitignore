@@ -9,5 +9,5 @@ exercise*
 Notes*
 *test*
 *.txt
-
+!tests.sh
 /ircserv
