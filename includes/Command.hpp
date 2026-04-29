@@ -27,4 +27,6 @@ class Command {
 		virtual void	execute(Client& client, Server& server) = 0;
 
 };
+
+std::vector<std::string> split(const std::string& s, char delim);
 #endif

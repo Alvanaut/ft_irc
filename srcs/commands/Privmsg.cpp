@@ -6,23 +6,6 @@
 
 Privmsg::Privmsg(const Message& msg) : Command(msg) {}
 
-static std::vector<std::string> split(const std::string& s, char delim)
-{
-	std::vector<std::string> tokens;
-	size_t start = 0;
-	size_t end = s.find(delim);
-	while (end != std::string::npos)
-	{
-		if (end > start)
-			tokens.push_back(s.substr(start, end - start));
-		start = end + 1;
-		end = s.find(delim, start);
-	}
-	if (start < s.size())
-		tokens.push_back(s.substr(start));
-	return (tokens);
-}
-
 static void sendToTarget(Client& client, Server& server,
 	const std::string& target, const std::string& text, bool withErrors)
 {
