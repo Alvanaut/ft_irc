@@ -370,40 +370,46 @@ const Client* Server::getClientByNick(const std::string& nick) const
 	return (NULL);
 }
 
+static Command* commandDispatch(Message msg)
+{
+	Command* res = NULL;
+	if (msg.command == "PASS")
+		res = new Pass(msg);
+	else if (msg.command == "NICK")
+		res = new Nick(msg);
+	else if (msg.command == "USER")
+		res = new User(msg);
+	else if (msg.command == "QUIT")
+		res = new Quit(msg);
+	else if (msg.command == "JOIN")
+		res = new Join(msg);
+	else if (msg.command == "PART")
+		res = new Part(msg);
+	else if (msg.command == "PRIVMSG")
+		res = new Privmsg(msg);
+	else if (msg.command == "NOTICE")
+		res = new Notice(msg);
+	else if (msg.command == "TOPIC")
+		res = new Topic(msg);
+	else if (msg.command == "INVITE")
+		res = new Invite(msg);
+	else if (msg.command == "KICK")
+		res = new Kick(msg);
+	else if (msg.command == "MODE")
+		res = new Mode(msg);
+	return res;
+}
+
 void Server::processCommand(Client& client, const std::string& line)
 {
+	Command* cmd = NULL;
 	Message msg = parseMessage(line);
 	if (msg.command.empty())
 		return ;
 
 	const std::string& nick = client.getNickname().empty() ? std::string("*") : client.getNickname();
 
-	Command* cmd = NULL;
-	if (msg.command == "PASS")
-		cmd = new Pass(msg);
-	else if (msg.command == "NICK")
-		cmd = new Nick(msg);
-	else if (msg.command == "USER")
-		cmd = new User(msg);
-	else if (msg.command == "QUIT")
-		cmd = new Quit(msg);
-	else if (msg.command == "JOIN")
-		cmd = new Join(msg);
-	else if (msg.command == "PART")
-		cmd = new Part(msg);
-	else if (msg.command == "PRIVMSG")
-		cmd = new Privmsg(msg);
-	else if (msg.command == "NOTICE")
-		cmd = new Notice(msg);
-	else if (msg.command == "TOPIC")
-		cmd = new Topic(msg);
-	else if (msg.command == "INVITE")
-		cmd = new Invite(msg);
-	else if (msg.command == "KICK")
-		cmd = new Kick(msg);
-	else if (msg.command == "MODE")
-		cmd = new Mode(msg);
-	else if (msg.command == "PING")
+	if (msg.command == "PING")
 	{
 		if (msg.params.empty())
 			sendToClient(client.getFd(), ":ircserv 409 " + nick + " :No origin specified\r\n");
@@ -413,7 +419,10 @@ void Server::processCommand(Client& client, const std::string& line)
 	}
 	else if (msg.command == "PONG")
 		return ;
+	else
+		cmd = commandDispatch(msg);
 
+	// TODO : parsing error, consider throwing runtime_errror here;
 	if (!cmd)
 		return ;
 	cmd->execute(client, *this);
