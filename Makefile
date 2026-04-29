@@ -2,7 +2,7 @@ NAME = ircserv
 
 CXX = c++
 
-CXXFLAGS = -Wall -Wextra -Werror -std=c++98
+CXXFLAGS = -Wall -Wextra -Werror -std=c++98 -ggdb3
 
 SRCS = srcs/main.cpp \
 	srcs/Command.cpp \
@@ -43,4 +43,7 @@ fclean: clean
 
 re: fclean all
 
-.PHONY: clean fclean re all
+test: all
+	./tests.sh
+
+.PHONY: clean fclean re all test
