@@ -25,5 +25,10 @@ void Pass::execute(Client& client, Server& server)
 		return ;
 	}
 	client.setPasswordAccepted(true);
+	if (client.registrationComplete())
+	{
+		client.setRegistered(true);
+		server.sendWelcome(client);
+	}
 	return ;
 }
