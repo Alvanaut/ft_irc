@@ -3,8 +3,11 @@
 # include "Channel.hpp"
 # include "Client.hpp"
 # include <map>
+# include <queue>
 # include <string>
 # include <sys/epoll.h>
+
+class Command;
 
 class Server
 {
@@ -16,8 +19,8 @@ private :
 
 	std::map<int, Client>			clients;  // key = socket fd
 	std::map<std::string, Channel>	channels; // key = channel name
+	std::queue<std::pair<Client*, Command*> > commands;
 
-	// <OCF>
 	Server(const Server& other);
 	Server&	operator=(const Server &other);
 	void	initSocket();
@@ -27,8 +30,9 @@ private :
 	void	removeClientFromAllChannels(int fd);
 	void	cleanup();
 	int		setNonBlocking(int fd);
-public :
 	Server();
+
+public :
 	Server(char *port, char *pass);
 	~Server();
 	void run();

@@ -425,8 +425,7 @@ void Server::processCommand(Client& client, const std::string& line)
 	// TODO : parsing error, consider throwing runtime_errror here;
 	if (!cmd)
 		return ;
-	cmd->execute(client, *this);
-	delete cmd;
+	commands.push(std::pair<Client*, Command*>(&client, cmd));
 }
 
 void Server::run()
@@ -464,6 +463,14 @@ void Server::run()
 			}
 			if (events[i].events & EPOLLIN)
 				handleClientEvent(fd);
+		}
+		while (!commands.empty())
+		{
+			Command* cmd = commands.front().second;
+			Client& client = *commands.front().first;
+			cmd->execute(client, *this);
+			delete cmd;
+			commands.pop();
 		}
 	}
 	cleanup();
