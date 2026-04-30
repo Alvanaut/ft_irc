@@ -80,22 +80,12 @@ Server& Server::operator=(const Server &other)
 	return (*this);
 }
 
-int Server::setNonBlocking(int fd)
-{
-	int flags = fcntl(fd, F_GETFL, 0);
-	if (flags == -1)
-		return (-1);
-	if (fcntl(fd, F_SETFL, flags | O_NONBLOCK) == -1)
-		return (-1);
-	return (0);
-}
-
 void Server::initSocket()
 {
 	listen_fd = socket(AF_INET, SOCK_STREAM, 0);
 	if (listen_fd < 0)
 		throw std::runtime_error("Server: socket() failed");
-	if (setNonBlocking(listen_fd) == -1)
+	if (fcntl(listen_fd, F_SETFL,  O_NONBLOCK) == -1)
 		throw std::runtime_error("Server: fcntl() failed on listen socket");
 
 	int reuse = 1;
@@ -202,10 +192,11 @@ void Server::acceptNewClients()
 			// means we have nothing more to read
 			if (errno == EAGAIN || errno == EWOULDBLOCK)
 				break ;
+            // TODO : we might want to throw a runtime error here
 			std::cerr << "accept() failed" << std::endl;
 			break ;
 		}
-		if (setNonBlocking(client_fd) == -1)
+		if (fcntl(client_fd, F_SETFL,  O_NONBLOCK) == -1)
 		{
 			close(client_fd);
 			continue ;

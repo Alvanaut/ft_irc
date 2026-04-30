@@ -26,9 +26,9 @@ private :
 	void	handleClientEvent(int fd);
 	void	removeClientFromAllChannels(int fd);
 	void	cleanup();
-	int		setNonBlocking(int fd);
-public :
 	Server();
+
+public :
 	Server(char *port, char *pass);
 	~Server();
 	void run();
