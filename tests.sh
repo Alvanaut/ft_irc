@@ -14,7 +14,7 @@ ADDR="0.0.0.0"
 SERVER_PID=""
 
 start_server() {
-    ./$EXECUTABLE "$PORT" "$PASS" &
+    valgrind ./$EXECUTABLE "$PORT" "$PASS" &
     SERVER_PID=$!
     sleep 1
 }
