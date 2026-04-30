@@ -25,6 +25,7 @@ private :
 	void	acceptNewClients();
 	void	handleClientEvent(int fd);
 	void	removeClientFromAllChannels(int fd);
+	void	unexpectedDisconnect(int fd, std::string reason);
 	void	cleanup();
 	Server();
 

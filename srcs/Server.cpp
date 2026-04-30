@@ -174,6 +174,26 @@ void Server::cleanup()
 	}
 }
 
+
+// Broadcast QUIT message if client DC's unexpectedly
+void Server::unexpectedDisconnect(int fd, std::string reason)
+{
+    Client* p = Server::getClientByFd(fd);
+    // should never happen.
+    if (p == NULL)
+    	return ;
+    Client& client = *p;
+    if (client.isRegistered())
+    {
+        reason = reason.empty() ? client.getNickname() : reason;
+	    const std::string nick = client.getNickname() ? "*" : client.getNickname();
+	    const std::string user = client.getUsername().empty() ? "*" : client.getUsername();
+        this->broadcastToClientChannels(client,
+		                                ":" + nick + "!" + user + "@ircserv QUIT :" + reason + "\r\n");
+    }
+    disconnectClient(fd);
+}
+
 void Server::disconnectClient(int fd)
 {
 	removeClientFromAllChannels(fd);
@@ -231,19 +251,20 @@ void Server::handleClientEvent(int fd)
 	std::map<int, Client>::iterator it = clients.find(fd);
 	if (it == clients.end())
 	{
-		disconnectClient(fd);
+        // this is an edge case of an edge case, should never happen.
+		unexpectedDisconnect(fd, "client no longer registered");
 		return ;
 	}
 	ssize_t bytes = recv(fd, buffer, sizeof(buffer), 0);
 	if (bytes == 0)
 	{
-		disconnectClient(fd);
+		unexpectedDisconnect(fd, "0 bytes recv'd");
 		return ;
 	}
 	if (bytes < 0)
 	{
 		if (errno != EAGAIN && errno != EWOULDBLOCK)
-			disconnectClient(fd);
+			unexpectedDisconnect(fd, "recv error");
 		return ;
 	}
 	it->second.appendToInputBuffer(std::string(buffer, bytes));
@@ -450,7 +471,7 @@ void Server::run()
 			}
 			if (events[i].events & (EPOLLHUP | EPOLLERR | EPOLLRDHUP))
 			{
-				disconnectClient(fd);
+				unexpectedDisconnect(fd, "client terminated connection");
 				continue ;
 			}
 			if (events[i].events & EPOLLIN)
