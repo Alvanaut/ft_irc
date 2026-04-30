@@ -15,7 +15,6 @@
 #include "../includes/Replies.hpp"
 
 #include <arpa/inet.h>
-#include <cerrno>
 #include <cstdlib>
 #include <cstring>
 #include <fcntl.h>
@@ -43,7 +42,7 @@ Server::Server() : port(0), password(), listen_fd(-1), epoll_fd(-1)
 }
 
 Server::Server(char *port_arg, char *pass)
-	: port(0), password(), listen_fd(-1), epoll_fd(-1)
+: port(0), password(), listen_fd(-1), epoll_fd(-1)
 {
 	if (port_arg == NULL || pass == NULL)
 		throw std::invalid_argument("Server: null constructor argument");
@@ -61,8 +60,8 @@ Server::~Server()
 }
 
 Server::Server(const Server& other)
-	: port(other.port), password(other.password), listen_fd(-1), epoll_fd(-1),
-	  clients(other.clients), channels(other.channels)
+: port(other.port), password(other.password), listen_fd(-1), epoll_fd(-1),
+  clients(other.clients), channels(other.channels)
 {
 }
 
@@ -186,7 +185,7 @@ void Server::unexpectedDisconnect(int fd, std::string reason)
     if (client.isRegistered())
     {
         reason = reason.empty() ? client.getNickname() : reason;
-	    const std::string nick = client.getNickname() ? "*" : client.getNickname();
+	    const std::string nick = client.getNickname().empty() ? "*" : client.getNickname();
 	    const std::string user = client.getUsername().empty() ? "*" : client.getUsername();
         this->broadcastToClientChannels(client,
 		                                ":" + nick + "!" + user + "@ircserv QUIT :" + reason + "\r\n");
@@ -209,12 +208,7 @@ void Server::acceptNewClients()
 		int client_fd = accept(listen_fd, NULL, NULL);
 		if (client_fd < 0)
 		{
-			// means we have nothing more to read
-			if (errno == EAGAIN || errno == EWOULDBLOCK)
-				break ;
-            // TODO : we might want to throw a runtime error here
-			std::cerr << "accept() failed" << std::endl;
-			break ;
+            break ;
 		}
 		if (fcntl(client_fd, F_SETFL,  O_NONBLOCK) == -1)
 		{
@@ -263,8 +257,7 @@ void Server::handleClientEvent(int fd)
 	}
 	if (bytes < 0)
 	{
-		if (errno != EAGAIN && errno != EWOULDBLOCK)
-			unexpectedDisconnect(fd, "recv error");
+		unexpectedDisconnect(fd, "recv error");
 		return ;
 	}
 	it->second.appendToInputBuffer(std::string(buffer, bytes));
@@ -457,9 +450,10 @@ void Server::run()
 		int ready = epoll_wait(epoll_fd, events, kMaxEvents, -1);
 		if (ready < 0)
 		{
-			if (errno == EINTR)
-				continue ;
-			throw std::runtime_error("Server: epoll_wait() failed");
+			// If we got SIGINT'd, get out cleanly (avoids using errno)
+			if (!g_server_should_run)
+				break ;
+         	throw std::runtime_error("Server: epoll_wait() failed");
 		}
 		for (int i = 0; i < ready; ++i)
 		{
