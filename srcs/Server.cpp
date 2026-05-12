@@ -15,7 +15,6 @@
 #include "../includes/Replies.hpp"
 
 #include <arpa/inet.h>
-#include <cerrno>
 #include <cstdlib>
 #include <cstring>
 #include <fcntl.h>
@@ -43,7 +42,7 @@ Server::Server() : port(0), password(), listen_fd(-1), epoll_fd(-1)
 }
 
 Server::Server(char *port_arg, char *pass)
-	: port(0), password(), listen_fd(-1), epoll_fd(-1)
+: port(0), password(), listen_fd(-1), epoll_fd(-1)
 {
 	if (port_arg == NULL || pass == NULL)
 		throw std::invalid_argument("Server: null constructor argument");
@@ -61,8 +60,8 @@ Server::~Server()
 }
 
 Server::Server(const Server& other)
-	: port(other.port), password(other.password), listen_fd(-1), epoll_fd(-1),
-	  clients(other.clients), channels(other.channels)
+: port(other.port), password(other.password), listen_fd(-1), epoll_fd(-1),
+  clients(other.clients), channels(other.channels)
 {
 }
 
@@ -80,22 +79,12 @@ Server& Server::operator=(const Server &other)
 	return (*this);
 }
 
-int Server::setNonBlocking(int fd)
-{
-	int flags = fcntl(fd, F_GETFL, 0);
-	if (flags == -1)
-		return (-1);
-	if (fcntl(fd, F_SETFL, flags | O_NONBLOCK) == -1)
-		return (-1);
-	return (0);
-}
-
 void Server::initSocket()
 {
 	listen_fd = socket(AF_INET, SOCK_STREAM, 0);
 	if (listen_fd < 0)
 		throw std::runtime_error("Server: socket() failed");
-	if (setNonBlocking(listen_fd) == -1)
+	if (fcntl(listen_fd, F_SETFL,  O_NONBLOCK) == -1)
 		throw std::runtime_error("Server: fcntl() failed on listen socket");
 
 	int reuse = 1;
@@ -184,6 +173,26 @@ void Server::cleanup()
 	}
 }
 
+
+// Broadcast QUIT message if client DC's unexpectedly
+void Server::unexpectedDisconnect(int fd, std::string reason)
+{
+    Client* p = Server::getClientByFd(fd);
+    // should never happen.
+    if (p == NULL)
+    	return ;
+    Client& client = *p;
+    if (client.isRegistered())
+    {
+        reason = reason.empty() ? client.getNickname() : reason;
+	    const std::string nick = client.getNickname().empty() ? "*" : client.getNickname();
+	    const std::string user = client.getUsername().empty() ? "*" : client.getUsername();
+        this->broadcastToClientChannels(client,
+		                                ":" + nick + "!" + user + "@ircserv QUIT :" + reason + "\r\n");
+    }
+    disconnectClient(fd);
+}
+
 void Server::disconnectClient(int fd)
 {
 	removeClientFromAllChannels(fd);
@@ -199,13 +208,9 @@ void Server::acceptNewClients()
 		int client_fd = accept(listen_fd, NULL, NULL);
 		if (client_fd < 0)
 		{
-			// means we have nothing more to read
-			if (errno == EAGAIN || errno == EWOULDBLOCK)
-				break ;
-			std::cerr << "accept() failed" << std::endl;
-			break ;
+            break ;
 		}
-		if (setNonBlocking(client_fd) == -1)
+		if (fcntl(client_fd, F_SETFL,  O_NONBLOCK) == -1)
 		{
 			close(client_fd);
 			continue ;
@@ -240,19 +245,19 @@ void Server::handleClientEvent(int fd)
 	std::map<int, Client>::iterator it = clients.find(fd);
 	if (it == clients.end())
 	{
-		disconnectClient(fd);
+        // this is an edge case of an edge case, should never happen.
+		unexpectedDisconnect(fd, "client no longer registered");
 		return ;
 	}
 	ssize_t bytes = recv(fd, buffer, sizeof(buffer), 0);
 	if (bytes == 0)
 	{
-		disconnectClient(fd);
+		unexpectedDisconnect(fd, "0 bytes recv'd");
 		return ;
 	}
 	if (bytes < 0)
 	{
-		if (errno != EAGAIN && errno != EWOULDBLOCK)
-			disconnectClient(fd);
+		unexpectedDisconnect(fd, "recv error");
 		return ;
 	}
 	it->second.appendToInputBuffer(std::string(buffer, bytes));
@@ -445,9 +450,16 @@ void Server::run()
 		int ready = epoll_wait(epoll_fd, events, kMaxEvents, -1);
 		if (ready < 0)
 		{
-			if (errno == EINTR)
-				continue ;
-			throw std::runtime_error("Server: epoll_wait() failed");
+			// If we got SIGINT'd, get out cleanly (avoids using errno)
+			if (!g_server_should_run)
+			{
+				std::map<int, Client>::iterator it = clients.begin();
+				for (; it != clients.end(); it++)
+					sendToClient(it->first,
+							"ERROR :Server interrupted, shutting down\r\n" );
+				break ;
+			}
+         	throw std::runtime_error("Server: epoll_wait() failed");
 		}
 		for (int i = 0; i < ready; ++i)
 		{
@@ -459,7 +471,7 @@ void Server::run()
 			}
 			if (events[i].events & (EPOLLHUP | EPOLLERR | EPOLLRDHUP))
 			{
-				disconnectClient(fd);
+				unexpectedDisconnect(fd, "client terminated connection");
 				continue ;
 			}
 			if (events[i].events & EPOLLIN)

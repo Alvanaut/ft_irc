@@ -14,7 +14,7 @@ ADDR="0.0.0.0"
 SERVER_PID=""
 
 start_server() {
-    ./$EXECUTABLE "$PORT" "$PASS" &
+    valgrind --track-fds=yes ./$EXECUTABLE "$PORT" "$PASS" &
     SERVER_PID=$!
     sleep 1
 }
@@ -135,3 +135,5 @@ run_test "472 MODE unknown mode" \
 	"472 nick21 z :is unknown mode char to me"
 
 stop_server
+# This is the command to test the flooding, first connect w/ irssi and join foo then press C-z (fg to go back)
+# printf "PASS pass\nNICK flood\nUSER user 0 * :Real Name\JOIN #foo\nPRIVMSG #foo :yoyoyo this is spam\nPRIVMSG #foo :yoyoyo this is spam\nPRIVMSG #foo :yoyoyo this is spam\nPRIVMSG #foo :yoyoyo this is spam\nPRIVMSG #foo :yoyoyo this is spam\nPRIVMSG #foo :yoyoyo this is spam\nPRIVMSG #foo :yoyoyo this is spam\nPRIVMSG #foo :yoyoyo this is spam\n" | nc -w 1 -C 0.0.0.0 6667
