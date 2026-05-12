@@ -453,7 +453,10 @@ void Server::run()
 			// If we got SIGINT'd, get out cleanly (avoids using errno)
 			if (!g_server_should_run)
 			{
-				std::cout << "handler called" << std::endl;
+				std::map<int, Client>::iterator it = clients.begin();
+				for (; it != clients.end(); it++)
+					sendToClient(it->first,
+							"ERROR :Server interrupted, shutting down\r\n" );
 				break ;
 			}
          	throw std::runtime_error("Server: epoll_wait() failed");

@@ -14,7 +14,7 @@ ADDR="0.0.0.0"
 SERVER_PID=""
 
 start_server() {
-    valgrind ./$EXECUTABLE "$PORT" "$PASS" &
+    valgrind --track-fds=yes ./$EXECUTABLE "$PORT" "$PASS" &
     SERVER_PID=$!
     sleep 1
 }
