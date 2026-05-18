@@ -282,6 +282,7 @@ void Server::sendClientOutput(int fd)
 		send(fd, msg.c_str(), msg.size(), 0);
 		c.clearOutputBuffer();
 	}
+	unmarkClientForOutput(fd);
 }
 
 const std::string& Server::getPassword() const
@@ -304,6 +305,28 @@ bool Server::isNickTaken(const std::string& nick, int exclude_fd) const
 	return (false);
 }
 
+void Server::markClientForOutput(int fd)
+{
+	struct epoll_event ev;
+	std::memset(&ev, 0, sizeof(ev));
+	ev.events = EPOLLIN | EPOLLRDHUP | EPOLLOUT;
+	ev.data.fd = fd;
+
+	if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD, fd, &ev) < 0)
+		throw std::runtime_error("epoll_ctl failed (markClient)");
+}
+
+void Server::unmarkClientForOutput(int fd)
+{
+	struct epoll_event ev;
+	std::memset(&ev, 0, sizeof(ev));
+	ev.events = EPOLLIN | EPOLLRDHUP;
+	ev.data.fd = fd;
+
+	if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD, fd, &ev) < 0)
+		throw std::runtime_error("epoll_ctl failed (unmarkClient)");
+}
+
 void Server::sendWelcome(Client& client)
 {
 	const std::string& nick = client.getNickname();
@@ -312,6 +335,7 @@ void Server::sendWelcome(Client& client)
 					  + RPL::yourHost(nick)
 					  + RPL::created(nick)
 					  + RPL::myInfo(nick);
+	markClientForOutput(client.getFd());
 	client.addToOutputBuffer(msg);
 }
 
@@ -417,6 +441,7 @@ void Server::addToClientOutput(int fd, const std::string &msg)
 	if (it == clients.end())
 		return ;
 	Client& client = it->second;
+	markClientForOutput(fd);
 	client.addToOutputBuffer(msg);
 }
 
@@ -460,52 +485,44 @@ void Server::run()
 
 	struct epoll_event events[kMaxEvents];
 
-	try
+	while (g_server_should_run)
 	{
-		while (g_server_should_run)
+		int ready = epoll_wait(epoll_fd, events, kMaxEvents, -1);
+		if (ready < 0)
 		{
-			int ready = epoll_wait(epoll_fd, events, kMaxEvents, -1);
-			if (ready < 0)
+			// If we didn't get SIGINT'd, exit now
+			if (g_server_should_run)
 			{
-				// If we got SIGINT'd, get out cleanly (avoids using errno)
-				if (!g_server_should_run)
-				{
-					std::map<int, Client>::iterator it = clients.begin();
-					for (; it != clients.end(); it++)
-
-						addToClientOutput(it->first,
-									 "ERROR :Server interrupted, shutting down\r\n");
-					break ;
-				}
-         		throw std::runtime_error("Server: epoll_wait() failed");
+				throw std::runtime_error("epoll failed in run loop");
 			}
-			for (int i = 0; i < ready; ++i)
+			// Else finish sending what is pending
+			std::map<int, Client>::iterator it = clients.begin();
+			for (; it != clients.end(); it++)
+
+				addToClientOutput(it->first,
+								  "ERROR :Server interrupted, shutting down\r\n");
+		}
+		for (int i = 0; i < ready; ++i)
+		{
+
+			int fd = events[i].data.fd;
+			if (fd == listen_fd)
 			{
-				int fd = events[i].data.fd;
-				if (fd == listen_fd)
-				{
-					acceptNewClients();
-					continue ;
-				}
-				if (events[i].events & (EPOLLHUP | EPOLLERR | EPOLLRDHUP))
-				{
-					unexpectedDisconnect(fd, "client terminated connection");
-					continue ;
-				}
-				if (events[i].events & EPOLLIN)
-					handleClientEvent(fd);
-				if (events[i].events & EPOLLOUT)
-				{
-					sendClientOutput(fd);
-				}
+				acceptNewClients();
+				continue ;
+			}
+			if (events[i].events & (EPOLLHUP | EPOLLERR | EPOLLRDHUP))
+			{
+				unexpectedDisconnect(fd, "client terminated connection");
+				continue ;
+			}
+			if (events[i].events & EPOLLIN)
+				handleClientEvent(fd);
+			if (events[i].events & EPOLLOUT)
+			{
+				sendClientOutput(fd);
 			}
 		}
-	}
-	catch (std::runtime_error& e)
-	{
-		std::map<int, Client>::iterator it = clients.begin();
-		for (; it != clients.end(); it++)
-			addToClientOutput(it->first, std::string(e.what()) + "\r\n");
 	}
 	cleanup();
 }

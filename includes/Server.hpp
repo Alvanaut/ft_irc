@@ -35,6 +35,8 @@ public :
 
 	// This is only so that the QUIT command can access it
 	void				disconnectClient(int fd);
+	void				unmarkClientForOutput(int fd);
+	void				markClientForOutput(int fd);
 	void				addToClientOutput(int fd, std::string &msg);
 	void				sendClientOutput(int fd);
 	void				initSocket();

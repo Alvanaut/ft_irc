@@ -10,17 +10,24 @@ int main(int ac, char **av)
 		return 1;
 	}
 	
-	Server	server(av[1], av[2]);
+
 	try
 	{
+		Server	server(av[1], av[2]);
 		server.initSocket();
 		server.initEpoll();
+		server.run();
 	}
 	catch (std::runtime_error& e)
 	{
-		std::cerr << "Error setting up - " << e.what() << std::endl;
+		std::cerr << "Runtime error, exiting: " << e.what() << std::endl;
+		return (1);
 	}
-	server.run();
+	catch (std::invalid_argument &e)
+	{
+		std::cerr << "Invalid argument: " << e.what() << std::endl;
+		return (1);
+	}
 
 	return (0);
 }
