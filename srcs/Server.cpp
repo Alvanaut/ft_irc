@@ -44,14 +44,10 @@ Server::Server() : port(0), password(), listen_fd(-1), epoll_fd(-1)
 Server::Server(char *port_arg, char *pass)
 : port(0), password(), listen_fd(-1), epoll_fd(-1)
 {
-	if (port_arg == NULL || pass == NULL)
-		throw std::invalid_argument("Server: null constructor argument");
 	port = std::atoi(port_arg);
 	if (port <= 0 || port > 65535)
 		throw std::invalid_argument("Server: invalid port");
 	password = pass;
-	initSocket();
-	initEpoll();
 }
 
 Server::~Server()
@@ -427,7 +423,6 @@ void Server::processCommand(Client& client, const std::string& line)
 	else
 		cmd = commandDispatch(msg);
 
-	// TODO : parsing error, consider throwing runtime_errror here;
 	if (!cmd)
 		return ;
 	cmd->execute(client, *this);
@@ -445,38 +440,49 @@ void Server::run()
 
 	struct epoll_event events[kMaxEvents];
 
-	while (g_server_should_run)
+	try
 	{
-		int ready = epoll_wait(epoll_fd, events, kMaxEvents, -1);
-		if (ready < 0)
+		while (g_server_should_run)
 		{
-			// If we got SIGINT'd, get out cleanly (avoids using errno)
-			if (!g_server_should_run)
+			int ready = epoll_wait(epoll_fd, events, kMaxEvents, -1);
+			if (ready < 0)
 			{
-				std::map<int, Client>::iterator it = clients.begin();
-				for (; it != clients.end(); it++)
-					sendToClient(it->first,
-							"ERROR :Server interrupted, shutting down\r\n" );
-				break ;
+				// If we got SIGINT'd, get out cleanly (avoids using errno)
+				if (!g_server_should_run)
+				{
+					std::map<int, Client>::iterator it = clients.begin();
+					for (; it != clients.end(); it++)
+
+						sendToClient(it->first,
+									 "ERROR :Server interrupted, shutting down\r\n" );
+					break ;
+				}
+         		throw std::runtime_error("Server: epoll_wait() failed");
 			}
-         	throw std::runtime_error("Server: epoll_wait() failed");
-		}
-		for (int i = 0; i < ready; ++i)
-		{
-			int fd = events[i].data.fd;
-			if (fd == listen_fd)
+			for (int i = 0; i < ready; ++i)
 			{
-				acceptNewClients();
-				continue ;
+				int fd = events[i].data.fd;
+				if (fd == listen_fd)
+				{
+					acceptNewClients();
+					continue ;
+				}
+				if (events[i].events & (EPOLLHUP | EPOLLERR | EPOLLRDHUP))
+				{
+					unexpectedDisconnect(fd, "client terminated connection");
+					continue ;
+				}
+				if (events[i].events & EPOLLIN)
+					handleClientEvent(fd);
 			}
-			if (events[i].events & (EPOLLHUP | EPOLLERR | EPOLLRDHUP))
-			{
-				unexpectedDisconnect(fd, "client terminated connection");
-				continue ;
-			}
-			if (events[i].events & EPOLLIN)
-				handleClientEvent(fd);
 		}
 	}
+	catch (std::runtime_error& e)
+	{
+		std::map<int, Client>::iterator it = clients.begin();
+		for (; it != clients.end(); it++)
+			sendToClient(it->first, std::string(e.what()) + "\r\n");
+	}
 	cleanup();
+
 }
