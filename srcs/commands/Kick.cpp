@@ -13,7 +13,7 @@ void Kick::execute(Client& client, Server& server)
 
 	if (_msg.params.size() < 2)
 	{
-		server.sendToClient(client.getFd(), ERR::needMoreParams(nick, "KICK"));
+		server.addToClientOutput(client.getFd(), ERR::needMoreParams(nick, "KICK"));
 		return ;
 	}
 
@@ -25,24 +25,24 @@ void Kick::execute(Client& client, Server& server)
 	Channel* ch = server.getChannel(chanName);
 	if (!ch)
 	{
-		server.sendToClient(client.getFd(), ERR::noSuchChannel(nick, chanName));
+		server.addToClientOutput(client.getFd(), ERR::noSuchChannel(nick, chanName));
 		return ;
 	}
 	if (!ch->hasMember(client.getFd()))
 	{
-		server.sendToClient(client.getFd(), ERR::notOnChannel(nick, chanName));
+		server.addToClientOutput(client.getFd(), ERR::notOnChannel(nick, chanName));
 		return ;
 	}
 	if (!ch->isOperator(client.getFd()))
 	{
-		server.sendToClient(client.getFd(), ERR::chanopPrivsNeeded(nick, chanName));
+		server.addToClientOutput(client.getFd(), ERR::chanopPrivsNeeded(nick, chanName));
 		return ;
 	}
 
 	const Client* target = server.getClientByNick(targetNick);
 	if (!target || !ch->hasMember(target->getFd()))
 	{
-		server.sendToClient(client.getFd(), ERR::userNotInChannel(nick, targetNick, chanName));
+		server.addToClientOutput(client.getFd(), ERR::userNotInChannel(nick, targetNick, chanName));
 		return ;
 	}
 

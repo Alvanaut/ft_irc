@@ -11,17 +11,17 @@ void Pass::execute(Client& client, Server& server)
 
 	if (_msg.params.empty())
 	{
-		server.sendToClient(client.getFd(), ERR::needMoreParams(nick, "PASS"));
+		server.addToClientOutput(client.getFd(), ERR::needMoreParams(nick, "PASS"));
 		return ;
 	}
 	if (client.isRegistered())
 	{
-		server.sendToClient(client.getFd(), ERR::alreadyRegistered(nick));
+		server.addToClientOutput(client.getFd(), ERR::alreadyRegistered(nick));
 		return ;
 	}
 	if (_msg.params[0] != server.getPassword())
 	{
-		server.sendToClient(client.getFd(), ERR::passwdMismatch(nick));
+		server.addToClientOutput(client.getFd(), ERR::passwdMismatch(nick));
 		return ;
 	}
 	client.setPasswordAccepted(true);

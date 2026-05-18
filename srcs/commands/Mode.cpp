@@ -25,7 +25,7 @@ void Mode::execute(Client& client, Server& server)
 
 	if (_msg.params.empty())
 	{
-		server.sendToClient(client.getFd(), ERR::needMoreParams(nick, "MODE"));
+		server.addToClientOutput(client.getFd(), ERR::needMoreParams(nick, "MODE"));
 		return ;
 	}
 
@@ -34,12 +34,12 @@ void Mode::execute(Client& client, Server& server)
 
 	if (!ch)
 	{
-		server.sendToClient(client.getFd(), ERR::noSuchChannel(nick, chanName));
+		server.addToClientOutput(client.getFd(), ERR::noSuchChannel(nick, chanName));
 		return ;
 	}
 	if (!ch->hasMember(client.getFd()))
 	{
-		server.sendToClient(client.getFd(), ERR::notOnChannel(nick, chanName));
+		server.addToClientOutput(client.getFd(), ERR::notOnChannel(nick, chanName));
 		return ;
 	}
 
@@ -49,7 +49,7 @@ void Mode::execute(Client& client, Server& server)
 
 	if (!ch->isOperator(client.getFd()))
 	{
-		server.sendToClient(client.getFd(), ERR::chanopPrivsNeeded(nick, chanName));
+		server.addToClientOutput(client.getFd(), ERR::chanopPrivsNeeded(nick, chanName));
 		return ;
 	}
 
@@ -90,7 +90,7 @@ void Mode::execute(Client& client, Server& server)
 				{
 					if (paramIdx >= _msg.params.size())
 					{
-						server.sendToClient(client.getFd(),
+						server.addToClientOutput(client.getFd(),
 							ERR::needMoreParams(nick, "MODE"));
 						break ;
 					}
@@ -112,7 +112,7 @@ void Mode::execute(Client& client, Server& server)
 			{
 				if (paramIdx >= _msg.params.size())
 				{
-					server.sendToClient(client.getFd(),
+					server.addToClientOutput(client.getFd(),
 						ERR::needMoreParams(nick, "MODE"));
 					break ;
 				}
@@ -120,7 +120,7 @@ void Mode::execute(Client& client, Server& server)
 				const Client* target = server.getClientByNick(targetNick);
 				if (!target || !ch->hasMember(target->getFd()))
 				{
-					server.sendToClient(client.getFd(),
+					server.addToClientOutput(client.getFd(),
 						ERR::userNotInChannel(nick, targetNick, chanName));
 					break ;
 				}
@@ -139,7 +139,7 @@ void Mode::execute(Client& client, Server& server)
 				{
 					if (paramIdx >= _msg.params.size())
 					{
-						server.sendToClient(client.getFd(),
+						server.addToClientOutput(client.getFd(),
 							ERR::needMoreParams(nick, "MODE"));
 						break ;
 					}
@@ -162,7 +162,7 @@ void Mode::execute(Client& client, Server& server)
 				break ;
 
 			default:
-				server.sendToClient(client.getFd(), ERR::unknownMode(nick, c));
+				server.addToClientOutput(client.getFd(), ERR::unknownMode(nick, c));
 				break ;
 		}
 	}

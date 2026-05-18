@@ -1,21 +1,21 @@
 #include "../includes/Client.hpp"
 
 Client::Client()
-	: fd(-1), input_buffer(), password_accepted(false), has_nickname(false),
+: fd(-1), input_buffer(), output_buffer(), password_accepted(false), has_nickname(false),
 	  has_username(false), registered(false), nickname(), old_nickname(),
 	  username(), real_name(), channels_joined()
 {
 }
 
 Client::Client(int client_fd)
-	: fd(client_fd), input_buffer(), password_accepted(false), has_nickname(false),
+: fd(client_fd), input_buffer(), output_buffer(), password_accepted(false), has_nickname(false),
 	  has_username(false), registered(false), nickname(), old_nickname(),
 	  username(), real_name(), channels_joined()
 {
 }
 
 Client::Client(const Client& other)
-	: fd(other.fd), input_buffer(other.input_buffer),
+: fd(other.fd), input_buffer(other.input_buffer), output_buffer(),
 	  password_accepted(other.password_accepted),
 	  has_nickname(other.has_nickname), has_username(other.has_username),
 	  registered(other.registered), nickname(other.nickname),
@@ -30,6 +30,7 @@ Client& Client::operator=(const Client& other)
 	{
 		fd = other.fd;
 		input_buffer = other.input_buffer;
+		output_buffer = other.output_buffer;
 		password_accepted = other.password_accepted;
 		has_nickname = other.has_nickname;
 		has_username = other.has_username;
@@ -47,6 +48,19 @@ Client::~Client()
 {
 }
 
+void Client::addToOutputBuffer(const std::string& to_add)
+{
+	output_buffer += to_add;
+}
+
+std::string& Client::getOutputBuf()
+{
+	return (output_buffer);
+}
+void Client::clearOutputBuffer()
+{
+	output_buffer = "";
+}
 int Client::getFd() const
 {
 	return (fd);

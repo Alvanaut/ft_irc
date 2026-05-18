@@ -33,7 +33,7 @@ static void joinOne(Client& client, Server& server,
 
 	if (!isValidChannelName(chanName))
 	{
-		server.sendToClient(client.getFd(), ERR::badChanMask(nick, chanName));
+		server.addToClientOutput(client.getFd(), ERR::badChanMask(nick, chanName));
 		return ;
 	}
 	if (client.isInChannel(chanName))
@@ -44,17 +44,17 @@ static void joinOne(Client& client, Server& server,
 	{
 		if (ch->isInviteOnly() && !ch->isInvited(client.getFd()))
 		{
-			server.sendToClient(client.getFd(), ERR::inviteOnlyChan(nick, chanName));
+			server.addToClientOutput(client.getFd(), ERR::inviteOnlyChan(nick, chanName));
 			return ;
 		}
 		if (!ch->getKey().empty() && ch->getKey() != key)
 		{
-			server.sendToClient(client.getFd(), ERR::badChannelKey(nick, chanName));
+			server.addToClientOutput(client.getFd(), ERR::badChannelKey(nick, chanName));
 			return ;
 		}
 		if (ch->getUserLimit() > 0 && (int)ch->getMembers().size() >= ch->getUserLimit())
 		{
-			server.sendToClient(client.getFd(), ERR::channelIsFull(nick, chanName));
+			server.addToClientOutput(client.getFd(), ERR::channelIsFull(nick, chanName));
 			return ;
 		}
 	}
@@ -71,12 +71,12 @@ static void joinOne(Client& client, Server& server,
 	server.broadcastToChannel(chanName, prefix + " JOIN :" + chanName + "\r\n");
 
 	if (ch->getTopic().empty())
-		server.sendToClient(client.getFd(), RPL::noTopic(nick, chanName));
+		server.addToClientOutput(client.getFd(), RPL::noTopic(nick, chanName));
 	else
-		server.sendToClient(client.getFd(), RPL::topic(nick, chanName, ch->getTopic()));
+		server.addToClientOutput(client.getFd(), RPL::topic(nick, chanName, ch->getTopic()));
 
-	server.sendToClient(client.getFd(), RPL::namReply(nick, chanName, buildNamesList(*ch, server)));
-	server.sendToClient(client.getFd(), RPL::endOfNames(nick, chanName));
+	server.addToClientOutput(client.getFd(), RPL::namReply(nick, chanName, buildNamesList(*ch, server)));
+	server.addToClientOutput(client.getFd(), RPL::endOfNames(nick, chanName));
 }
 
 void Join::execute(Client& client, Server& server)
@@ -85,7 +85,7 @@ void Join::execute(Client& client, Server& server)
 
 	if (_msg.params.empty() || _msg.params[0].empty())
 	{
-		server.sendToClient(client.getFd(), ERR::needMoreParams(nick, "JOIN"));
+		server.addToClientOutput(client.getFd(), ERR::needMoreParams(nick, "JOIN"));
 		return ;
 	}
 

@@ -35,11 +35,12 @@ public :
 
 	// This is only so that the QUIT command can access it
 	void				disconnectClient(int fd);
-
+	void				addToClientOutput(int fd, std::string &msg);
+	void				sendClientOutput(int fd);
 	void				initSocket();
 	void				initEpoll();
 	void				joinChannel(int fd, const std::string& channel_name);
-	void				sendToClient(int fd, const std::string& msg);
+	void				addToClientOutput(int fd, const std::string& msg);
 	const std::string&	getPassword() const;
 	std::string			getServerName() const;
 	bool				isNickTaken(const std::string& nick, int exclude_fd) const;

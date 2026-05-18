@@ -13,7 +13,7 @@ void Topic::execute(Client& client, Server& server)
 
 	if (_msg.params.empty())
 	{
-		server.sendToClient(client.getFd(), ERR::needMoreParams(nick, "TOPIC"));
+		server.addToClientOutput(client.getFd(), ERR::needMoreParams(nick, "TOPIC"));
 		return ;
 	}
 
@@ -22,12 +22,12 @@ void Topic::execute(Client& client, Server& server)
 
 	if (!ch)
 	{
-		server.sendToClient(client.getFd(), ERR::noSuchChannel(nick, chanName));
+		server.addToClientOutput(client.getFd(), ERR::noSuchChannel(nick, chanName));
 		return ;
 	}
 	if (!ch->hasMember(client.getFd()))
 	{
-		server.sendToClient(client.getFd(), ERR::notOnChannel(nick, chanName));
+		server.addToClientOutput(client.getFd(), ERR::notOnChannel(nick, chanName));
 		return ;
 	}
 
@@ -35,16 +35,16 @@ void Topic::execute(Client& client, Server& server)
 	if (_msg.params.size() < 2)
 	{
 		if (ch->getTopic().empty())
-			server.sendToClient(client.getFd(), RPL::noTopic(nick, chanName));
+			server.addToClientOutput(client.getFd(), RPL::noTopic(nick, chanName));
 		else
-			server.sendToClient(client.getFd(), RPL::topic(nick, chanName, ch->getTopic()));
+			server.addToClientOutput(client.getFd(), RPL::topic(nick, chanName, ch->getTopic()));
 		return ;
 	}
 
 	// Modification du topic
 	if (ch->isTopicRestricted() && !ch->isOperator(client.getFd()))
 	{
-		server.sendToClient(client.getFd(), ERR::chanopPrivsNeeded(nick, chanName));
+		server.addToClientOutput(client.getFd(), ERR::chanopPrivsNeeded(nick, chanName));
 		return ;
 	}
 

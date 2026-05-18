@@ -11,18 +11,18 @@ void Nick::execute(Client& client, Server& server)
 
 	if (_msg.params.empty() || _msg.params[0].empty())
 	{
-		server.sendToClient(client.getFd(), ERR::noNicknameGiven(currentNick));
+		server.addToClientOutput(client.getFd(), ERR::noNicknameGiven(currentNick));
 		return ;
 	}
 	const std::string& newNick = _msg.params[0];
 	if (!isValidNickname(newNick))
 	{
-		server.sendToClient(client.getFd(), ERR::erroneusNickname(currentNick, newNick));
+		server.addToClientOutput(client.getFd(), ERR::erroneusNickname(currentNick, newNick));
 		return ;
 	}
 	if (server.isNickTaken(newNick, client.getFd()))
 	{
-		server.sendToClient(client.getFd(), ERR::nicknameInUse(currentNick, newNick));
+		server.addToClientOutput(client.getFd(), ERR::nicknameInUse(currentNick, newNick));
 		return ;
 	}
 	client.setNickname(newNick);

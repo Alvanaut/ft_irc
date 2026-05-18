@@ -215,7 +215,7 @@ void Server::acceptNewClients()
 		// add client_fd to listening pool
 		struct epoll_event ev;
 		std::memset(&ev, 0, sizeof(ev));
-		ev.events = EPOLLIN | EPOLLRDHUP;
+		ev.events = EPOLLIN | EPOLLRDHUP | EPOLLOUT;
 		ev.data.fd = client_fd;
 		if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, client_fd, &ev) < 0)
 		{
@@ -270,9 +270,18 @@ void Server::handleClientEvent(int fd)
 	}
 }
 
-void Server::sendToClient(int fd, const std::string& msg)
+void Server::sendClientOutput(int fd)
 {
-	send(fd, msg.c_str(), msg.size(), 0);
+	std::map<int, Client>::iterator it = clients.find(fd);
+	if (it == clients.end())
+		return ;
+	Client& c = it->second;
+    std::string &msg = c.getOutputBuf();
+	if (!msg.empty())
+	{
+		send(fd, msg.c_str(), msg.size(), 0);
+		c.clearOutputBuffer();
+	}
 }
 
 const std::string& Server::getPassword() const
@@ -299,10 +308,11 @@ void Server::sendWelcome(Client& client)
 {
 	const std::string& nick = client.getNickname();
 	const std::string& user = client.getUsername();
-	sendToClient(client.getFd(), RPL::welcome(nick, user));
-	sendToClient(client.getFd(), RPL::yourHost(nick));
-	sendToClient(client.getFd(), RPL::created(nick));
-	sendToClient(client.getFd(), RPL::myInfo(nick));
+	std::string msg = RPL::welcome(nick, user)
+					  + RPL::yourHost(nick)
+					  + RPL::created(nick)
+					  + RPL::myInfo(nick);
+	client.addToOutputBuffer(msg);
 }
 
 void Server::broadcastToClientChannels(const Client& client, const std::string& msg)
@@ -317,7 +327,7 @@ void Server::broadcastToClientChannels(const Client& client, const std::string& 
 		for (std::set<int>::const_iterator m = members.begin(); m != members.end(); ++m)
 		{
 			if (*m != client.getFd())
-				sendToClient(*m, msg);
+				addToClientOutput(*m, msg);
 		}
 	}
 }
@@ -329,7 +339,7 @@ void Server::broadcastToChannel(const std::string& channel_name, const std::stri
 		return ;
 	const std::set<int>& members = ch->second.getMembers();
 	for (std::set<int>::const_iterator m = members.begin(); m != members.end(); ++m)
-		sendToClient(*m, msg);
+		addToClientOutput(*m, msg);
 }
 
 void Server::removeChannel(const std::string& name)
@@ -401,6 +411,15 @@ static Command* commandDispatch(Message msg)
 	return res;
 }
 
+void Server::addToClientOutput(int fd, const std::string &msg)
+{
+	std::map<int, Client>::iterator it = clients.find(fd);
+	if (it == clients.end())
+		return ;
+	Client& client = it->second;
+	client.addToOutputBuffer(msg);
+}
+
 void Server::processCommand(Client& client, const std::string& line)
 {
 	Command* cmd = NULL;
@@ -413,12 +432,13 @@ void Server::processCommand(Client& client, const std::string& line)
 	if (msg.command == "PING")
 	{
 		if (msg.params.empty())
-			sendToClient(client.getFd(), ":ircserv 409 " + nick + " :No origin specified\r\n");
+			addToClientOutput(client.getFd(), ":ircserv 409 " + nick + " :No origin specified\r\n");
 		else
-			sendToClient(client.getFd(), "PONG ircserv :" + msg.params[0] + "\r\n");
+			addToClientOutput(client.getFd(), "PONG ircserv :" + msg.params[0] + "\r\n");
 		return ;
 	}
-	else if (msg.command == "PONG")
+	else if
+		(msg.command == "PONG")
 		return ;
 	else
 		cmd = commandDispatch(msg);
@@ -453,8 +473,8 @@ void Server::run()
 					std::map<int, Client>::iterator it = clients.begin();
 					for (; it != clients.end(); it++)
 
-						sendToClient(it->first,
-									 "ERROR :Server interrupted, shutting down\r\n" );
+						addToClientOutput(it->first,
+									 "ERROR :Server interrupted, shutting down\r\n");
 					break ;
 				}
          		throw std::runtime_error("Server: epoll_wait() failed");
@@ -474,6 +494,10 @@ void Server::run()
 				}
 				if (events[i].events & EPOLLIN)
 					handleClientEvent(fd);
+				if (events[i].events & EPOLLOUT)
+				{
+					sendClientOutput(fd);
+				}
 			}
 		}
 	}
@@ -481,8 +505,7 @@ void Server::run()
 	{
 		std::map<int, Client>::iterator it = clients.begin();
 		for (; it != clients.end(); it++)
-			sendToClient(it->first, std::string(e.what()) + "\r\n");
+			addToClientOutput(it->first, std::string(e.what()) + "\r\n");
 	}
 	cleanup();
-
 }

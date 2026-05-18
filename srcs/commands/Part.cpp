@@ -13,7 +13,7 @@ void Part::execute(Client& client, Server& server)
 
 	if (_msg.params.empty() || _msg.params[0].empty())
 	{
-		server.sendToClient(client.getFd(), ERR::needMoreParams(nick, "PART"));
+		server.addToClientOutput(client.getFd(), ERR::needMoreParams(nick, "PART"));
 		return ;
 	}
 
@@ -29,12 +29,12 @@ void Part::execute(Client& client, Server& server)
 
 		if (!ch)
 		{
-			server.sendToClient(client.getFd(), ERR::noSuchChannel(nick, chanName));
+			server.addToClientOutput(client.getFd(), ERR::noSuchChannel(nick, chanName));
 			continue ;
 		}
 		if (!ch->hasMember(client.getFd()))
 		{
-			server.sendToClient(client.getFd(), ERR::notOnChannel(nick, chanName));
+			server.addToClientOutput(client.getFd(), ERR::notOnChannel(nick, chanName));
 			continue ;
 		}
 

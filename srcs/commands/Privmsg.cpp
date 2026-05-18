@@ -20,13 +20,13 @@ static void sendToTarget(Client& client, Server& server,
 		if (!ch)
 		{
 			if (withErrors)
-				server.sendToClient(client.getFd(), ERR::noSuchChannel(nick, target));
+				server.addToClientOutput(client.getFd(), ERR::noSuchChannel(nick, target));
 			return ;
 		}
 		if (!ch->hasMember(client.getFd()))
 		{
 			if (withErrors)
-				server.sendToClient(client.getFd(), ERR::cannotSendToChan(nick, target));
+				server.addToClientOutput(client.getFd(), ERR::cannotSendToChan(nick, target));
 			return ;
 		}
 		// Envoyer à tous les membres sauf l'expéditeur
@@ -34,7 +34,7 @@ static void sendToTarget(Client& client, Server& server,
 		for (std::set<int>::const_iterator it = members.begin(); it != members.end(); ++it)
 		{
 			if (*it != client.getFd())
-				server.sendToClient(*it, msg);
+				server.addToClientOutput(*it, msg);
 		}
 	}
 	else
@@ -43,10 +43,10 @@ static void sendToTarget(Client& client, Server& server,
 		if (!dest)
 		{
 			if (withErrors)
-				server.sendToClient(client.getFd(), ERR::noSuchNick(nick, target));
+				server.addToClientOutput(client.getFd(), ERR::noSuchNick(nick, target));
 			return ;
 		}
-		server.sendToClient(dest->getFd(), msg);
+		server.addToClientOutput(dest->getFd(), msg);
 	}
 }
 
@@ -56,12 +56,12 @@ void Privmsg::execute(Client& client, Server& server)
 
 	if (_msg.params.empty() || _msg.params[0].empty())
 	{
-		server.sendToClient(client.getFd(), ERR::noRecipient(nick, "PRIVMSG"));
+		server.addToClientOutput(client.getFd(), ERR::noRecipient(nick, "PRIVMSG"));
 		return ;
 	}
 	if (_msg.params.size() < 2 || _msg.params[1].empty())
 	{
-		server.sendToClient(client.getFd(), ERR::noTextToSend(nick));
+		server.addToClientOutput(client.getFd(), ERR::noTextToSend(nick));
 		return ;
 	}
 

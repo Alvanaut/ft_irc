@@ -32,14 +32,14 @@ void Notice::execute(Client& client, Server& server)
 			for (std::set<int>::const_iterator it = members.begin(); it != members.end(); ++it)
 			{
 				if (*it != client.getFd())
-					server.sendToClient(*it, msg);
+					server.addToClientOutput(*it, msg);
 			}
 		}
 		else
 		{
 			const Client* dest = server.getClientByNick(target);
 			if (dest)
-				server.sendToClient(dest->getFd(), msg);
+				server.addToClientOutput(dest->getFd(), msg);
 		}
 	}
 	return ;

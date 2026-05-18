@@ -9,6 +9,7 @@ class Client
 private:
 	int					fd;
 	std::string			input_buffer;
+	std::string			output_buffer;
 	bool				password_accepted;
 	bool				has_nickname;
 	bool				has_username;
@@ -26,6 +27,10 @@ public:
 	Client& operator=(const Client& other);
 	~Client();
 
+
+	void				addToOutputBuffer(const std::string& to_add);
+	void 				clearOutputBuffer();
+	std::string&		getOutputBuf();
 	int					getFd() const;
 	const std::string&	getInputBuffer() const;
 	bool				isPasswordAccepted() const;
